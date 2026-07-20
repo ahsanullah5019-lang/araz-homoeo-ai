@@ -1,19 +1,13 @@
 import React, { useState } from 'react';
 import { theme } from '../utils/theme';
+import { REPERTORY_DATABASE, Rubric, Chapter } from '../data/repertoryData';
 
-interface Rubric {
+interface SelectedRubricItem {
   id: string;
-  name: string;
-  remedies: Record<string, number>;
+  nameEn: string;
+  nameBn: string;
+  remedies: { remedyId: string; grade: number }[];
 }
-
-// ডামি রেপার্টরি ডাটাবেস (অফলাইন মোডের জন্য)
-const mockRubrics: Rubric[] = [
-  { id: 'r1', name: 'Headache, cold applications relieves', remedies: { 'Ars': 3, 'Sil': 2, 'Puls': 1 } },
-  { id: 'r2', name: 'Mind, anger, irascibility', remedies: { 'Nux-v': 3, 'Cham': 3, 'Bry': 2, 'Hep': 2 } },
-  { id: 'r3', name: 'Thirst, large quantities, infrequent', remedies: { 'Bry': 3, 'Ars': 1 } },
-  { id: 'r4', name: 'Generalities, warmth, warm room aggravates', remedies: { 'Puls': 3, 'Apis': 3, 'Iod': 2 } },
-];
 
 interface RepertorySearchProps {
   patientName?: string;
@@ -27,40 +21,73 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
   onSelectRemedyForPrescription
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedRubrics, setSelectedRubrics] = useState<Rubric[]>([]);
+  const [selectedChapterId, setSelectedChapterId] = useState<string>('all');
+  const [selectedRubrics, setSelectedRubrics] = useState<SelectedRubricItem[]>([]);
 
-  // রুব্রিক্স ফিল্টার বা সার্চ লজিক
-  const filteredRubrics = mockRubrics.filter(rubric =>
-    rubric.name.toLowerCase().includes(searchTerm.toLowerCase().trim()) &&
-    !selectedRubrics.some(sel => sel.id === rubric.id)
-  );
+  // ১. আসল REPERTORY_DATABASE থেকে চ্যাপ্টার ও সার্চ টার্ম অনুযায়ী রুব্রিক ফিল্টার
+  const getAllRubrics = (): { rubric: Rubric; chapterName: string }[] => {
+    let list: { rubric: Rubric; chapterName: string }[] = [];
 
-  // রুব্রিক্স সিলেক্ট করার ফাংশন
+    REPERTORY_DATABASE.forEach((chapter: Chapter) => {
+      if (selectedChapterId === 'all' || chapter.id === selectedChapterId) {
+        chapter.rubrics.forEach((rubric: Rubric) => {
+          list.push({
+            rubric,
+            chapterName: chapter.nameBn
+          });
+        });
+      }
+    });
+
+    return list;
+  };
+
+  const allRubricsList = getAllRubrics();
+
+  const filteredRubrics = allRubricsList.filter(({ rubric }) => {
+    const term = searchTerm.toLowerCase().trim();
+    const matchesSearch =
+      term === '' ||
+      rubric.nameEn.toLowerCase().includes(term) ||
+      rubric.nameBn.toLowerCase().includes(term);
+
+    const isNotSelected = !selectedRubrics.some(sel => sel.id === rubric.id);
+    return matchesSearch && isNotSelected;
+  });
+
+  // ২. রুব্রিক সিলেক্ট ও রিমুভ ফাংশন
   const handleSelectRubric = (rubric: Rubric) => {
-    setSelectedRubrics(prev => [...prev, rubric]);
+    setSelectedRubrics(prev => [
+      ...prev,
+      {
+        id: rubric.id,
+        nameEn: rubric.nameEn,
+        nameBn: rubric.nameBn,
+        remedies: rubric.remedies
+      }
+    ]);
     setSearchTerm('');
   };
 
-  // রুব্রিক্স রিমুভ করার ফাংশন
   const handleRemoveRubric = (id: string) => {
     setSelectedRubrics(prev => prev.filter(rubric => rubric.id !== id));
   };
 
-  // রেপার্টরাইজেশন লজিক: ওষুধের টোটাল পয়েন্ট এবং লক্ষণ ম্যাচিং সংখ্যা হিসাব করা
+  // ৩. ক্লাসিক্যাল রেপার্টরাইজেশন লজিক (লক্ষণ ম্যাচিং + গ্রেড পয়েন্ট স্কোরিং)
   const calculateRemedyRanking = () => {
     const ranking: Record<string, { totalPoints: number; matchCount: number }> = {};
 
     selectedRubrics.forEach(rubric => {
-      Object.entries(rubric.remedies).forEach(([remedy, points]) => {
-        if (!ranking[remedy]) {
-          ranking[remedy] = { totalPoints: 0, matchCount: 0 };
+      rubric.remedies.forEach(r => {
+        if (!ranking[r.remedyId]) {
+          ranking[r.remedyId] = { totalPoints: 0, matchCount: 0 };
         }
-        ranking[remedy].totalPoints += points;
-        ranking[remedy].matchCount += 1;
+        ranking[r.remedyId].totalPoints += r.grade;
+        ranking[r.remedyId].matchCount += 1;
       });
     });
 
-    // বেশি লক্ষণ ম্যাচিং এবং বেশি পয়েন্টের ওপর ভিত্তি করে সর্ট করা
+    // প্রথমে বেশি লক্ষণ ম্যাচিং, তারপর বেশি স্কোরের ওপর ভিত্তি করে সর্টিং
     return Object.entries(ranking).sort((a, b) => {
       if (b[1].matchCount !== a[1].matchCount) {
         return b[1].matchCount - a[1].matchCount;
@@ -72,38 +99,90 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
   const rankedRemedies = calculateRemedyRanking();
 
   return (
-    <div style={{
-      backgroundColor: theme.colors.background,
-      minHeight: '100vh',
-      padding: '20px',
-      fontFamily: theme.fonts.regular,
-      boxSizing: 'border-box'
-    }}>
+    <div
+      style={{
+        backgroundColor: theme.colors.background,
+        minHeight: '100vh',
+        padding: '20px',
+        fontFamily: theme.fonts.regular,
+        boxSizing: 'border-box'
+      }}
+    >
       <h2 style={{ color: theme.colors.textPrimary, marginTop: 0, fontFamily: theme.fonts.bold }}>
-        AI রেপার্টরি ও রেপার্টরাইজেশন শিট {patientName ? `(${patientName})` : ''}
+        📊 AI রেপার্টরি ও রেপার্টরাইজেশন শিট {patientName ? `(${patientName})` : ''}
       </h2>
-      <p style={{ color: theme.colors.textSecondary, marginTop: '-10px', marginBottom: '20px' }}>
-        লক্ষণ সার্চ করুন এবং সঠিক সম্ভাব্য ওষুধ নির্বাচন করুন
+      <p style={{ color: theme.colors.textSecondary, marginTop: '-8px', marginBottom: '20px' }}>
+        বাংলা বা ইংরেজিতে রুব্রিক সার্চ করুন এবং সঠিক রেমিডি র‍্যাঙ্কিং তৈরি করুন
       </p>
 
       {initialSymptoms && (
-        <div style={{ backgroundColor: '#e3f2fd', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', color: '#0d47a1' }}>
+        <div
+          style={{
+            backgroundColor: '#e3f2fd',
+            padding: '12px 15px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            fontSize: '14px',
+            color: '#0d47a1',
+            borderLeft: '4px solid #1976d2'
+          }}
+        >
           <strong>রোগীর কেস নোট:</strong> {initialSymptoms}
         </div>
       )}
 
+      {/* চ্যাপ্টার ফিল্টার ফিল্ড */}
+      <div style={{ marginBottom: '15px', display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+        <button
+          onClick={() => setSelectedChapterId('all')}
+          style={{
+            padding: '6px 14px',
+            borderRadius: '20px',
+            border: 'none',
+            backgroundColor: selectedChapterId === 'all' ? theme.colors.primary : '#e0e0e0',
+            color: selectedChapterId === 'all' ? '#fff' : '#333',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          🌐 সকল চ্যাপ্টার
+        </button>
+        {REPERTORY_DATABASE.map(chap => (
+          <button
+            key={chap.id}
+            onClick={() => setSelectedChapterId(chap.id)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: 'none',
+              backgroundColor: selectedChapterId === chap.id ? theme.colors.primary : '#e0e0e0',
+              color: selectedChapterId === chap.id ? '#fff' : '#333',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {chap.icon} {chap.nameBn}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
         {/* বাম পাশ: রুব্রিক্স সার্চ ও সিলেকশন */}
-        <div style={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-          
+        <div style={{ flex: 1, minWidth: '320px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* সার্চ বক্স কার্ড */}
           <div style={{ backgroundColor: theme.colors.surface, padding: '20px', borderRadius: '12px', boxShadow: theme.shadows.card }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontFamily: theme.fonts.bold }}>লক্ষণ / Rubric অনুসন্ধান</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontFamily: theme.fonts.bold }}>
+              🔍 লক্ষণ / Rubric অনুসন্ধান
+            </label>
             <input
               type="text"
-              placeholder="লক্ষণ টাইপ করুন (যেমন: Headache, Anger)..."
+              placeholder="লক্ষণ লিখুন (যেমন: Anxiety, মাথা ব্যথা, একজিমা)..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -116,38 +195,74 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
             />
 
             {/* সার্চ রেজাল্ট ড্রপডাউন */}
-            {searchTerm.trim() !== '' && (
-              <div style={{ border: `1px solid ${theme.colors.border}`, borderRadius: '8px', marginTop: '5px', maxHeight: '200px', overflowY: 'auto', backgroundColor: '#fff' }}>
-                {filteredRubrics.length === 0 ? (
-                  <p style={{ padding: '10px', color: theme.colors.textSecondary, margin: 0, fontSize: '14px' }}>কোনো Rubric পাওয়া যায়নি</p>
-                ) : (
-                  filteredRubrics.map((rubric) => (
-                    <div
-                      key={rubric.id}
-                      onClick={() => handleSelectRubric(rubric)}
-                      style={{ padding: '12px', borderBottom: `1px solid ${theme.colors.border}`, cursor: 'pointer', backgroundColor: '#fff', fontSize: '14px' }}
-                    >
-                      {rubric.name}
+            <div style={{ border: `1px solid ${theme.colors.border}`, borderRadius: '8px', marginTop: '10px', maxHeight: '220px', overflowY: 'auto', backgroundColor: '#fff' }}>
+              {filteredRubrics.length === 0 ? (
+                <p style={{ padding: '12px', color: theme.colors.textSecondary, margin: 0, fontSize: '14px' }}>
+                  কোনো Rubric পাওয়া যায়নি
+                </p>
+              ) : (
+                filteredRubrics.slice(0, 30).map(({ rubric, chapterName }) => (
+                  <div
+                    key={rubric.id}
+                    onClick={() => handleSelectRubric(rubric)}
+                    style={{
+                      padding: '10px 12px',
+                      borderBottom: `1px solid ${theme.colors.border}`,
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: theme.colors.textPrimary }}>{rubric.nameEn}</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>{rubric.nameBn}</div>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
+                    <span style={{ fontSize: '11px', backgroundColor: '#f0f0f0', padding: '2px 6px', borderRadius: '4px', color: '#555' }}>
+                      {chapterName}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* নির্বাচিত লক্ষণের তালিকা */}
           <div style={{ backgroundColor: theme.colors.surface, padding: '20px', borderRadius: '12px', boxShadow: theme.shadows.card, flex: 1 }}>
-            <h4 style={{ marginTop: 0, marginBottom: '15px', fontFamily: theme.fonts.bold }}>বাছাইকৃত লক্ষণসমূহ ({selectedRubrics.length})</h4>
+            <h4 style={{ marginTop: 0, marginBottom: '15px', fontFamily: theme.fonts.bold }}>
+              📌 বাছাইকৃত লক্ষণসমূহ ({selectedRubrics.length})
+            </h4>
             {selectedRubrics.length === 0 ? (
               <p style={{ color: theme.colors.textSecondary, fontSize: '14px' }}>এখনো কোনো লক্ষণ সিলেক্ট করা হয়নি।</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {selectedRubrics.map(rubric => (
-                  <div key={rubric.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', backgroundColor: theme.colors.background, borderRadius: '6px' }}>
-                    <span style={{ fontSize: '14px', color: theme.colors.textPrimary }}>{rubric.name}</span>
+                  <div
+                    key={rubric.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px',
+                      backgroundColor: theme.colors.background,
+                      borderRadius: '6px'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 'bold', color: theme.colors.textPrimary }}>{rubric.nameEn}</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>{rubric.nameBn}</div>
+                    </div>
                     <button
                       onClick={() => handleRemoveRubric(rubric.id)}
-                      style={{ border: 'none', background: 'none', color: theme.colors.error, cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                      style={{
+                        border: 'none',
+                        background: 'none',
+                        color: theme.colors.error,
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '16px'
+                      }}
                     >
                       ✕
                     </button>
@@ -161,12 +276,12 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
         {/* ডান পাশ: রেপার্টরাইজেশন শিট ও ওষুধ র‍্যাংকিং টেবিল */}
         <div style={{ flex: 1.2, minWidth: '350px', backgroundColor: theme.colors.surface, padding: '20px', borderRadius: '12px', boxShadow: theme.shadows.card }}>
           <h4 style={{ marginTop: 0, marginBottom: '15px', fontFamily: theme.fonts.bold }}>
-            Remedy Ranking Matrix (রেপার্টরাইজেশন ফলাফল)
+            🩺 Remedy Ranking Matrix (রেপার্টরাইজেশন ফলাফল)
           </h4>
 
           {selectedRubrics.length === 0 ? (
             <p style={{ color: theme.colors.textSecondary, fontSize: '14px', textAlign: 'center', padding: '40px 0' }}>
-              লক্ষণ নির্বাচন করলে ওষুধের তালিকা এবং গ্রেড এখানে স্বয়ংক্রিয়ভাবে তৈরি হবে।
+              লক্ষণ নির্বাচন করলে ওষুধের তালিকা, ম্যাচিং সংখ্যা এবং গ্রেড স্বয়ংক্রিয়ভাবে তৈরি হবে।
             </p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -174,8 +289,8 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
                 <thead>
                   <tr style={{ borderBottom: `2px solid ${theme.colors.border}` }}>
                     <th style={{ padding: '10px 5px', fontFamily: theme.fonts.bold, fontSize: '14px' }}>ওষুধের নাম</th>
-                    <th style={{ padding: '10px 5px', fontFamily: theme.fonts.bold, fontSize: '14px' }}>লক্ষণ ম্যাচ (Match)</th>
-                    <th style={{ padding: '10px 5px', fontFamily: theme.fonts.bold, fontSize: '14px' }}>মোট স্কোর (Score)</th>
+                    <th style={{ padding: '10px 5px', fontFamily: theme.fonts.bold, fontSize: '14px' }}>লক্ষণ ম্যাচ</th>
+                    <th style={{ padding: '10px 5px', fontFamily: theme.fonts.bold, fontSize: '14px' }}>মোট স্কোর</th>
                     <th style={{ padding: '10px 5px', fontFamily: theme.fonts.bold, fontSize: '14px' }}>অ্যাকশন</th>
                   </tr>
                 </thead>
@@ -186,7 +301,16 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
                         {remedy}
                       </td>
                       <td style={{ padding: '12px 5px' }}>
-                        <span style={{ backgroundColor: theme.colors.primaryLight || '#e3f2fd', color: theme.colors.primary, padding: '3px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                        <span
+                          style={{
+                            backgroundColor: '#e3f2fd',
+                            color: theme.colors.primary,
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                          }}
+                        >
                           {stat.matchCount} / {selectedRubrics.length}
                         </span>
                       </td>

@@ -107,7 +107,7 @@ export const App: React.FC = () => {
             patientName={selectedPatient?.name}
             initialSymptoms={lastCaseData?.symptomsSummary || ''} 
             onSelectRemedyForPrescription={(remedyName) => {
-              setSelectedRemedy(remedyName); // সিলেক্ট করা ওষুধ রেপার্টরি থেকে নেওয়া হলো
+              setSelectedRemedy(remedyName); // সিলেক্ট করা ওষুধ রেপার্টরি থেকে নেওয়া হলো
               handleNavClick('prescription-build');
             }}
           />
@@ -205,7 +205,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* সাইডবার নেভিগেশন (ডেস্কটপ এবং মোবাইল ড্রয়ার) */}
+      {/* সাইডবার নেভিগেশন (ডেস্কটপ এবং মোবাইল ড্রয়ার) */}
       <nav style={{
         width: isMobile ? '100%' : '260px',
         backgroundColor: theme.colors.textPrimary,
@@ -297,7 +297,7 @@ export const App: React.FC = () => {
                 color: '#fff'
               }}
             >
-              📚 মেটেরিয়া মেডিকা
+              📚 মেটেরিয়া মেডিকা
             </button>
 
             <button 
@@ -339,7 +339,7 @@ export const App: React.FC = () => {
       </nav>
 
       {/* কন্টেন্ট এরিয়া */}
-      <main style={{ flex: 1, minHeight: '100vh', overflowY: 'auto' }}>
+      <main style={{ flex: 1, minHeight: '100vh', overflowY: 'auto', boxSizing: 'border-box' }}>
         {renderScreen()}
       </main>
     </div>
