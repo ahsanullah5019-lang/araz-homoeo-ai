@@ -29,20 +29,28 @@ export const AddPatient: React.FC<AddPatientProps> = ({ onSuccess, onCancel }) =
     setLoading(true);
     setError('');
 
-    const result = await PatientService.addPatient({
-      name: formData.name,
-      age: parseInt(formData.age) || 0,
-      gender: formData.gender,
-      phone: formData.phone,
-      photoUrl: formData.photoUrl || undefined
-    });
+    try {
+      const result = await PatientService.addPatient({
+        name: formData.name,
+        age: parseInt(formData.age) || 0,
+        gender: formData.gender,
+        phone: formData.phone,
+        photoUrl: formData.photoUrl || undefined
+      });
 
-    setLoading(false);
+      setLoading(false);
 
-    if (result.success) {
-      onSuccess();
-    } else {
-      setError('রোগী সংরক্ষণ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+      if (result && result.success) {
+        onSuccess();
+      } else {
+        console.error('Patient Service returned error:', result);
+        const errorMsg = result?.error || 'রোগী সংরক্ষণ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+        setError(typeof errorMsg === 'string' ? errorMsg : 'রোগী সংরক্ষণ করতে সমস্যা হয়েছে।');
+      }
+    } catch (err: any) {
+      setLoading(false);
+      console.error('Unhandled Add Patient Error:', err);
+      setError(`ত্রুটি: ${err.message || 'রোগী সংরক্ষণ করা যায়নি।'}`);
     }
   };
 
@@ -59,7 +67,7 @@ export const AddPatient: React.FC<AddPatientProps> = ({ onSuccess, onCancel }) =
       <h2 style={{ color: theme.colors.textPrimary, marginTop: 0, fontFamily: theme.fonts.bold }}>নতুন রোগী নিবন্ধন</h2>
       <hr style={{ border: `1px solid ${theme.colors.border}`, marginBottom: '20px' }} />
 
-      {error && <p style={{ color: theme.colors.error, fontSize: '14px' }}>{error}</p>}
+      {error && <p style={{ color: theme.colors.error, fontSize: '14px', backgroundColor: '#ffebee', padding: '8px', borderRadius: '4px' }}>{error}</p>}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <div>
@@ -75,13 +83,13 @@ export const AddPatient: React.FC<AddPatientProps> = ({ onSuccess, onCancel }) =
 
         <div style={{ display: 'flex', gap: '15px' }}>
           <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: '5px', color: theme.colors.textPrimary }}>বয়স *</label>
+            <label style={{ display: 'block', marginBottom: '5px', color: theme.colors.textPrimary }}>বয়স *</label>
             <input
               type="number"
               value={formData.age}
               onChange={(e) => setFormData({ ...formData, age: e.target.value })}
               style={{ width: '100%', padding: '10px', borderRadius: '6px', border: `1px solid ${theme.colors.border}`, outline: 'none' }}
-              placeholder="বয়স"
+              placeholder="বয়স"
             />
           </div>
           <div style={{ flex: 1 }}>

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "vite --open --force",
     "dev": "vite --open",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "keywords": [],

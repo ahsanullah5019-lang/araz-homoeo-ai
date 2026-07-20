@@ -2,9 +2,17 @@ import React, { useEffect } from 'react';
 import { theme } from '../utils/theme';
 import { DashboardCard } from '../components/DashboardCard';
 import { useAppStore } from '../store/useAppStore';
-import { PatientService } from '../database/services/PatientService';
+import { PatientService, PatientData } from '../database/services/PatientService';
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onAddPatientClick?: () => void;
+  onSelectPatient?: (patient: PatientData) => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ 
+  onAddPatientClick, 
+  onSelectPatient 
+}) => {
   const { 
     patients, 
     setPatients, 
@@ -25,7 +33,7 @@ export const Dashboard: React.FC = () => {
     fetchPatients();
   }, [setPatients, setLoading]);
 
-  // সার্চ কুয়েরির ওপর ভিত্তি করে রোগী ফিল্টার করা
+  // সার্চ কুয়েরির ওপর ভিত্তি করে রোগী ফিল্টার করা
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     patient.phone.includes(searchQuery)
@@ -45,16 +53,19 @@ export const Dashboard: React.FC = () => {
           <p style={{ color: theme.colors.textSecondary, margin: '5px 0 0 0' }}>ডক্টরস ড্যাশবোর্ড</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{
-            backgroundColor: theme.colors.primary,
-            color: '#fff',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            boxShadow: theme.shadows.button,
-            fontFamily: theme.fonts.bold
-          }}>
+          <button 
+            onClick={onAddPatientClick}
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: '#fff',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              boxShadow: theme.shadows.button,
+              fontFamily: theme.fonts.bold
+            }}
+          >
             + নতুন রোগী
           </button>
         </div>
@@ -65,14 +76,14 @@ export const Dashboard: React.FC = () => {
         <DashboardCard title="আজকের রোগী" count={filteredPatients.length} icon="👥" color={theme.colors.primary} />
         <DashboardCard title="আজকের অ্যাপয়েন্টমেন্ট" count="০" icon="📅" color={theme.colors.accent} />
         <DashboardCard title="ফলো-আপ রোগী" count="০" icon="🔄" color={theme.colors.secondary} />
-        <DashboardCard title="আজকের আয়" count="৳ ০.০০" icon="💰" subText="সারসংক্ষেপ" color="#8B5CF6" />
+        <DashboardCard title="আজকের আয়" count="৳ ০.০০" icon="💰" subText="সারসংক্ষেপ" color="#8B5CF6" />
       </div>
 
       {/* ২. ইউনিভার্সাল সার্চ বার */}
       <div style={{ marginBottom: '25px' }}>
         <input 
           type="text" 
-          placeholder="নাম বা মোবাইল নম্বর দিয়ে রোগী খুঁজুন (অফলাইনেও কার্যকর)..." 
+          placeholder="নাম বা মোবাইল নম্বর দিয়ে রোগী খুঁজুন (অফলাইনেও কার্যকর)..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -95,30 +106,35 @@ export const Dashboard: React.FC = () => {
         </h3>
         
         {isLoading ? (
-          <p style={{ color: theme.colors.textSecondary, textAlign: 'center' }}>BD Bazar লোড হচ্ছে... দুঃখিত, ARAZ Homoeo AI লোড হচ্ছে...</p>
+          <p style={{ color: theme.colors.textSecondary, textAlign: 'center' }}>ARAZ Homoeo AI লোড হচ্ছে...</p>
         ) : filteredPatients.length === 0 ? (
           <p style={{ color: theme.colors.textSecondary, textAlign: 'center', padding: '30px 0' }}>
-            {searchQuery ? "এই নামে কোনো রোগী পাওয়া যায়নি।" : "এখনো কোনো রোগী যোগ করা হয়নি।"}
+            {searchQuery ? "এই নামে কোনো রোগী পাওয়া যায়নি।" : "এখনো কোনো রোগী যোগ করা হয়নি।"}
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filteredPatients.map((patient) => (
-              <div key={patient.id} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '15px',
-                borderRadius: '8px',
-                border: `1px solid ${theme.colors.border}`,
-                cursor: 'pointer'
-              }}>
+              <div 
+                key={patient.id} 
+                onClick={() => onSelectPatient && onSelectPatient(patient)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  border: `1px solid ${theme.colors.border}`,
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+              >
                 <div>
                   <h4 style={{ margin: 0, color: theme.colors.textPrimary, fontFamily: theme.fonts.bold }}>{patient.name}</h4>
                   <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
-                    বয়স: {patient.age} | লিঙ্গ: {patient.gender} | ফোন: {patient.phone}
+                    বয়স: {patient.age} | লিঙ্গ: {patient.gender} | ফোন: {patient.phone}
                   </span>
                 </div>
-                <span style={{ color: theme.colors.primary, fontSize: '14px' }}>বিস্তারিত ➔</span>
+                <span style={{ color: theme.colors.primary, fontSize: '14px', fontWeight: 'bold' }}>বিস্তারিত ➔</span>
               </div>
             ))}
           </div>

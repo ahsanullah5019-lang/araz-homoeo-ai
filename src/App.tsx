@@ -22,7 +22,15 @@ export const App: React.FC = () => {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'dashboard':
-        return <Dashboard />;
+        return (
+          <Dashboard 
+            onAddPatientClick={() => setCurrentScreen('add-patient')}
+            onSelectPatient={(patient) => {
+              setSelectedPatient(patient);
+              setCurrentScreen('case-taking');
+            }}
+          />
+        );
       case 'add-patient':
         return (
           <AddPatient 
@@ -33,10 +41,10 @@ export const App: React.FC = () => {
       case 'case-taking':
         return (
           <CaseTaking 
-            patientId={selectedPatient?.id || 'temp-id'} 
-            patientName={selectedPatient?.name || 'অজ্ঞাত রোগী'} 
+            patientId={selectedPatient?.id || ''} 
+            patientName={selectedPatient?.name || 'কোনো রোগী সিলেক্ট করা হয়নি'} 
             onSave={(caseData) => {
-              alert('কেস হিস্ট্রি সফলভাবে অফলাইনে সংরক্ষিত হয়েছে!');
+              alert('কেস হিস্ট্রি সফলভাবে সংরক্ষিত হয়েছে!');
               setCurrentScreen('repertory');
             }} 
             onBack={() => setCurrentScreen('dashboard')} 
@@ -74,7 +82,15 @@ export const App: React.FC = () => {
       case 'settings':
         return <SettingsScreen />;
       default:
-        return <Dashboard />;
+        return (
+          <Dashboard 
+            onAddPatientClick={() => setCurrentScreen('add-patient')}
+            onSelectPatient={(patient) => {
+              setSelectedPatient(patient);
+              setCurrentScreen('case-taking');
+            }}
+          />
+        );
     }
   };
 
@@ -125,13 +141,7 @@ export const App: React.FC = () => {
             </button>
 
             <button 
-              onClick={() => {
-                if (!selectedPatient) {
-                  // এখানে সরাসরি Date অবজেক্ট পাস করা হয়েছে
-                  setSelectedPatient({ id: '1', name: 'রহমত আলী', age: 45, gender: 'পুরুষ', phone: '01712345678', createdAt: new Date() });
-                }
-                setCurrentScreen('case-taking');
-              }}
+              onClick={() => setCurrentScreen('case-taking')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
                 fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'case-taking' ? theme.colors.primary : 'transparent',
@@ -153,13 +163,7 @@ export const App: React.FC = () => {
             </button>
 
             <button 
-              onClick={() => {
-                if (!selectedPatient) {
-                  // এখানেও সরাসরি Date অবজেক্ট পাস করা হয়েছে
-                  setSelectedPatient({ id: '1', name: 'রহমত আলী', age: 45, gender: 'পুরুষ', phone: '01712345678', createdAt: new Date() });
-                }
-                setCurrentScreen('prescription-build');
-              }}
+              onClick={() => setCurrentScreen('prescription-build')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
                 fontFamily: theme.fonts.bold, backgroundColor: ['prescription-build', 'prescription-view'].includes(currentScreen) ? theme.colors.primary : 'transparent',

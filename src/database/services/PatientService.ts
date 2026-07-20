@@ -1,18 +1,7 @@
 import { db } from "../firebaseConfig";
-import { collection, addDoc, getDocs, enableIndexedDbPersistence } from "firebase/firestore";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
-// ১. অফলাইন ডেটা পারসিস্টেন্স বা লোকাল ক্যাশে মেমোরি সচল করা
-if (typeof window !== "undefined") {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn("মাল্টিপল ট্যাব খোলা থাকায় অফলাইন স্টোরেজ ব্যাকআপ মোডে চলছে।");
-    } else if (err.code === 'unimplemented') {
-      console.error("এই ব্রাউজারটি অফলাইন ডাটাবেস সাপোর্ট করে না।");
-    }
-  });
-}
-
-// রোগীর ডেটার জন্য ইন্টারফেস বা টাইপ ডেফিনিশন
+// রোগীর ডেটার জন্য টাইপ ডেফিনিশন
 export interface PatientData {
   id?: string;
   name: string;
@@ -24,26 +13,50 @@ export interface PatientData {
   createdAt: Date;
 }
 
-// ২. রোগী ব্যবস্থাপনার মূল ফাংশনসমূহ
+// রোগী ব্যবস্থাপনার মূল ফাংশনসমূহ
 export const PatientService = {
-  // অফলাইনে বা অনলাইনে নতুন রোগী যোগ করার ফাংশন
+  // নতুন রোগী যোগ করার ফাংশন
   async addPatient(patient: Omit<PatientData, 'id' | 'createdAt'>) {
     try {
+      if (!db) {
+        throw new Error("Firestore DB কানেকশন পাওয়া যায়নি!");
+      }
+
       const patientCollection = collection(db, "patients");
-      const docRef = await addDoc(patientCollection, {
-        ...patient,
+      
+      const payloadData: Record<string, any> = {
+        name: patient.name,
+        age: Number(patient.age),
+        gender: patient.gender,
+        phone: patient.phone,
         createdAt: new Date()
-      });
+      };
+
+      if (patient.photoUrl) {
+        payloadData.photoUrl = patient.photoUrl;
+      }
+      if (patient.chiefComplaints) {
+        payloadData.chiefComplaints = patient.chiefComplaints;
+      }
+
+      const docRef = await addDoc(patientCollection, payloadData);
+      console.log("রোগী সফলভাবে সংরক্ষিত হয়েছে! ID:", docRef.id);
       return { success: true, id: docRef.id };
-    } catch (error) {
-      console.error("রোগী যোগ করতে সমস্যা হয়েছে: ", error);
-      return { success: false, error };
+
+    } catch (error: any) {
+      console.error("রোগী যোগ করতে সমস্যা হয়েছে: ", error);
+      return { 
+        success: false, 
+        error: error.message || "রোগী সংরক্ষণ করতে সমস্যা হয়েছে।" 
+      };
     }
   },
 
-  // অফলাইন ক্যাশে এবং ক্লাউড থেকে সব রোগীর তালিকা নিয়ে আসার ফাংশন
+  // সব রোগীর তালিকা নিয়ে আসার ফাংশন
   async getAllPatients(): Promise<PatientData[]> {
     try {
+      if (!db) return [];
+      
       const patientCollection = collection(db, "patients");
       const querySnapshot = await getDocs(patientCollection);
       
@@ -58,13 +71,13 @@ export const PatientService = {
           phone: data.phone,
           photoUrl: data.photoUrl,
           chiefComplaints: data.chiefComplaints,
-          createdAt: data.createdAt?.toDate() || new Date()
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date()
         });
       });
       
       return patients;
     } catch (error) {
-      console.error("রোগীর তালিকা আনতে সমস্যা হয়েছে: ", error);
+      console.error("রোগীর তালিকা আনতে সমস্যা হয়েছে: ", error);
       return [];
     }
   }
