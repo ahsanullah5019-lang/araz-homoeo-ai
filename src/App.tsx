@@ -7,9 +7,10 @@ import { RepertorySearch } from './screens/RepertorySearch';
 import { PrescriptionBuilder } from './screens/PrescriptionBuilder';
 import { PrescriptionPreview } from './screens/PrescriptionPreview';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { PatientHistory } from './screens/PatientHistory';
 import { useAppStore } from './store/useAppStore';
 
-type ScreenType = 'dashboard' | 'add-patient' | 'case-taking' | 'repertory' | 'prescription-build' | 'prescription-view' | 'settings';
+type ScreenType = 'dashboard' | 'add-patient' | 'case-taking' | 'patient-history' | 'repertory' | 'prescription-build' | 'prescription-view' | 'settings';
 
 export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('dashboard');
@@ -17,6 +18,9 @@ export const App: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
   const { selectedPatient, setSelectedPatient } = useAppStore();
   
+  // কেস টেকিং ও রেপার্টরি থেকে ডাটা শেয়ারিং স্টেট
+  const [lastCaseData, setLastCaseData] = useState<any>(null);
+  const [selectedRemedy, setSelectedRemedy] = useState<string>('Ars');
   const [activePrescription, setActivePrescription] = useState<any>(null);
 
   // স্ক্রিন সাইজ চেঞ্জ ট্র্যাক করা
@@ -64,19 +68,43 @@ export const App: React.FC = () => {
             patientId={selectedPatient?.id || ''} 
             patientName={selectedPatient?.name || 'কোনো রোগী সিলেক্ট করা হয়নি'} 
             onSave={(caseData) => {
-              alert('কেস হিস্ট্রি সফলভাবে সংরক্ষিত হয়েছে!');
-              handleNavClick('repertory');
+              setLastCaseData(caseData); // কেস টেকিংয়ের লক্ষণ স্টোর করা হলো
+              alert('কেস হিস্ট্রি সফলভাবে সংরক্ষিত হয়েছে!');
+              handleNavClick('repertory'); // সরাসরি রেপার্টরি স্ক্রিনে পাঠাবে
             }} 
             onBack={() => handleNavClick('dashboard')} 
           />
         );
+      case 'patient-history':
+        return (
+          <PatientHistory 
+            onEditCase={(caseData) => {
+              setLastCaseData(caseData);
+              handleNavClick('case-taking'); // লক্ষণ সংশোধন বা নতুন লক্ষণ যোগ করতে কেস টেকিংয়ে যাবে
+            }}
+            onGoToRepertory={(symptomsSummary) => {
+              setLastCaseData({ symptomsSummary });
+              handleNavClick('repertory'); // রেপার্টরি অনুসন্ধানে যাবে
+            }}
+            onBack={() => handleNavClick('dashboard')}
+          />
+        );
       case 'repertory':
-        return <RepertorySearch />;
+        return (
+          <RepertorySearch 
+            patientName={selectedPatient?.name}
+            initialSymptoms={lastCaseData?.symptomsSummary || ''} 
+            onSelectRemedyForPrescription={(remedyName) => {
+              setSelectedRemedy(remedyName); // সিলেক্ট করা ওষুধ রেপার্টরি থেকে নেওয়া হলো
+              handleNavClick('prescription-build');
+            }}
+          />
+        );
       case 'prescription-build':
         return (
           <PrescriptionBuilder 
             patientName={selectedPatient?.name || 'অজ্ঞাত রোগী'} 
-            selectedRemedy="Ars" 
+            selectedRemedy={selectedRemedy} 
             onGenerate={(data) => {
               setActivePrescription(data);
               handleNavClick('prescription-view');
@@ -157,7 +185,7 @@ export const App: React.FC = () => {
         display: isMobile ? (isMobileMenuOpen ? 'flex' : 'none') : 'flex',
         flexDirection: 'column',
         padding: '20px 10px',
-         justifyContent: 'space-between',
+        justifyContent: 'space-between',
         boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
         position: isMobile ? 'fixed' : 'relative',
         top: isMobile ? '50px' : '0',
@@ -212,6 +240,17 @@ export const App: React.FC = () => {
             </button>
 
             <button 
+              onClick={() => handleNavClick('patient-history')}
+              style={{
+                width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
+                fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'patient-history' ? theme.colors.primary : 'transparent',
+                color: '#fff'
+              }}
+            >
+              📂 কেস ইতিহাস ও রেকর্ড
+            </button>
+
+            <button 
               onClick={() => handleNavClick('repertory')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
@@ -249,7 +288,7 @@ export const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* কন্টেন্ট এরিয়া */}
+      {/* কন্টেন্ট এরিয়া */}
       <main style={{ flex: 1, minHeight: '100vh', overflowY: 'auto' }}>
         {renderScreen()}
       </main>
