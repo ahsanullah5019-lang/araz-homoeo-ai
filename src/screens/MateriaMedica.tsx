@@ -6,35 +6,47 @@ interface MateriaMedicaProps {
 }
 
 export const MateriaMedica: React.FC<MateriaMedicaProps> = ({ onBack }) => {
+  const remedies = Object.values(MATERIA_MEDICA_DATABASE);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRemedy, setSelectedRemedy] = useState<RemedyInfo>(
-    Object.values(MATERIA_MEDICA_DATABASE)[0]
-  );
+  const [selectedRemedy, setSelectedRemedy] = useState<RemedyInfo>(remedies[0]);
 
-  const remediesList = Object.values(MATERIA_MEDICA_DATABASE).filter((remedy) =>
+  // ফিল্টারিং লজিক (নাম, সাধারণ নাম বা কি-নোট দিয়ে সার্চ)
+  const remediesList = remedies.filter((remedy) =>
     remedy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     remedy.commonName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     remedy.keynotes.some((k) => k.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', overflow: 'hidden', backgroundColor: '#f1f5f9', fontFamily: 'sans-serif' }}>
+      
+      {/* ফিক্সড টপ হেডার (পিছিয়ে যাওয়ার বাটন সহ) */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '12px 24px', 
+        backgroundColor: '#ffffff', 
+        borderBottom: '1px solid #cbd5e1', 
+        flexShrink: 0 
+      }}>
         <div>
-          <h1 style={{ margin: 0, color: '#1e293b', fontSize: '24px' }}>📚 ডিজিটাল মেটেরিয়া মেডিকা লাইব্রেরি</h1>
-          <p style={{ margin: '5px 0 0', color: '#64748b' }}>হোমিওপ্যাথিক ওষুধের বিস্তারিত লক্ষণ, অঙ্গভিত্তিক ক্রিয়া ও কি-নোট রিডিং</p>
+          <h1 style={{ margin: 0, color: '#1e293b', fontSize: '20px', fontWeight: 'bold' }}>📚 ডিজিটাল মেটেরিয়া মেডিকা এনসাইক্লোপিডিয়া</h1>
+          <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: '13px' }}>হোমিওপ্যাথিক মূল প্রদর্শন লক্ষণ, মানসিক অবস্থা ও অঙ্গভিত্তিক ক্রিয়া রেফারেন্স</p>
         </div>
         {onBack && (
           <button
             onClick={onBack}
             style={{
-              padding: '8px 16px',
-              backgroundColor: '#e2e8f0',
+              padding: '8px 18px',
+              backgroundColor: '#2563eb',
+              color: '#ffffff',
               border: 'none',
               borderRadius: '6px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              fontSize: '14px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}
           >
             ⬅️ ব্যাকে যান
@@ -42,130 +54,210 @@ export const MateriaMedica: React.FC<MateriaMedicaProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* Main Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '20px' }}>
-        {/* Left Side: Search & Remedy List */}
-        <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-          <input
-            type="text"
-            placeholder="🔍 ওষুধ বা লক্ষণ খুঁজুন..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e1',
-              marginBottom: '15px',
-              boxSizing: 'border-box'
-            }}
-          />
+      {/* প্রধান ৩-কলামের স্ক্রোলযোগ্য বডি কন্টেইনার */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        
+        {/* কলাম ১: মাঝখানের ফিক্সড সাইজ ওষুধ সার্চ ও তালিকা (স্বাধীন স্ক্রোলবার) */}
+        <div style={{ 
+          width: '340px', 
+          borderRight: '1px solid #cbd5e1', 
+          backgroundColor: '#ffffff', 
+          display: 'flex', 
+          flexDirection: 'column',
+          flexShrink: 0
+        }}>
+          {/* সার্চ বক্স (ফিক্সড) */}
+          <div style={{ padding: '12px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+            <input
+              type="text"
+              placeholder="🔍 ওষুধ বা লক্ষণ লিখুন..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', textAlign: 'right' }}>
+              মোট ঔষধ: {remediesList.length} টি
+            </div>
+          </div>
 
-          <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+          {/* ওষুধের তালিকা (শুধুমাত্র এটি স্ক্রোল হবে) */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
             {remediesList.length > 0 ? (
-              remediesList.map((remedy) => (
-                <div
-                  key={remedy.id}
-                  onClick={() => setSelectedRemedy(remedy)}
-                  style={{
-                    padding: '12px',
-                    marginBottom: '8px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    backgroundColor: selectedRemedy.id === remedy.id ? '#2563eb' : '#ffffff',
-                    color: selectedRemedy.id === remedy.id ? '#ffffff' : '#1e293b',
-                    border: '1px solid #e2e8f0',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{remedy.name}</div>
-                  <div style={{ fontSize: '12px', opacity: 0.8 }}>{remedy.commonName}</div>
-                </div>
-              ))
+              remediesList.map((remedy) => {
+                const isSelected = selectedRemedy?.id === remedy.id;
+                return (
+                  <div
+                    key={remedy.id}
+                    onClick={() => setSelectedRemedy(remedy)}
+                    style={{
+                      padding: '12px',
+                      marginBottom: '8px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
+                      border: isSelected ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                      transition: 'all 0.15s ease-in-out'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', fontSize: '15px', color: isSelected ? '#1d4ed8' : '#1e293b' }}>
+                      {remedy.name}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                      {remedy.commonName}
+                    </div>
+                  </div>
+                );
+              })
             ) : (
-              <p style={{ textAlign: 'center', color: '#94a3b8' }}>কোনো ওষুধ পাওয়া যায়নি</p>
+              <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '14px', marginTop: '20px' }}>কোনো ওষুধ পাওয়া যায়নি</p>
             )}
           </div>
         </div>
 
-        {/* Right Side: Detailed Materia Medica View */}
-        {selectedRemedy && (
-          <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '15px', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, color: '#1e3a8a', fontSize: '28px' }}>{selectedRemedy.name}</h2>
-              <p style={{ margin: '4px 0 0', color: '#475569', fontStyle: 'italic' }}>
-                ল্যাটিন নাম: {selectedRemedy.latinName} | সাধারণ নাম: {selectedRemedy.commonName}
-              </p>
-            </div>
-
-            {/* Summary */}
-            <div style={{ backgroundColor: '#eff6ff', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', borderLeft: '4px solid #2563eb' }}>
-              <strong>এক নজরে সারসংক্ষেপ:</strong> {selectedRemedy.summary}
-            </div>
-
-            {/* Keynotes */}
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#0f172a', borderBottom: '2px solid #cbd5e1', paddingBottom: '5px' }}>🔑 মূল প্রদর্শক লক্ষণ (Keynotes)</h3>
-              <ul>
-                {selectedRemedy.keynotes.map((item, idx) => (
-                  <li key={idx} style={{ marginBottom: '6px', color: '#334155' }}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Organ Affinities */}
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#0f172a', borderBottom: '2px solid #cbd5e1', paddingBottom: '5px' }}>🎯 প্রধান কার্যকরী অঙ্গসমূহ (Organ Affinities)</h3>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-                {selectedRemedy.organAffinities.map((organ, idx) => (
-                  <span key={idx} style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: '15px', fontSize: '13px', fontWeight: 'bold' }}>
-                    {organ}
-                  </span>
-                ))}
+        {/* কলাম ২: নির্বাচিত ওষুধের বিস্তারিত প্রদর্শন (স্বাধীন স্ক্রোলবার) */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', backgroundColor: '#ffffff' }}>
+          {selectedRemedy && (
+            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+              
+              {/* ওষুধের শিরোনাম ও সাব-টাইটেল */}
+              <div style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: '12px', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#1e3a8a', fontSize: '28px', fontWeight: 'bold' }}>{selectedRemedy.name}</h2>
+                <p style={{ margin: '4px 0 0', color: '#475569', fontSize: '14px', fontStyle: 'italic' }}>
+                  ল্যাটিন নাম: <strong>{selectedRemedy.latinName}</strong> | সাধারণ নাম: <strong>{selectedRemedy.commonName}</strong>
+                </p>
               </div>
-            </div>
 
-            {/* Mind & Body Symptoms */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div>
-                <h4 style={{ color: '#1e293b', marginBottom: '8px' }}>🧠 মানসিক লক্ষণ (Mind)</h4>
-                <ul>
-                  {selectedRemedy.mindSymptoms.map((m, idx) => (
-                    <li key={idx} style={{ fontSize: '14px', color: '#475569' }}>{m}</li>
+              {/* এক নজরে সারসংক্ষেপ */}
+              <div style={{ backgroundColor: '#eff6ff', padding: '14px 18px', borderRadius: '8px', marginBottom: '20px', borderLeft: '5px solid #2563eb' }}>
+                <strong style={{ color: '#1e40af', fontSize: '15px', display: 'block', marginBottom: '4px' }}>📌 সংক্ষেপে ওষুধের নির্যাস:</strong>
+                <span style={{ color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>{selectedRemedy.summary}</span>
+              </div>
+
+              {/* প্রধান প্রদর্শক লক্ষণ (Keynotes) */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ color: '#0f172a', fontSize: '18px', borderBottom: '1px solid #cbd5e1', paddingBottom: '6px', marginBottom: '12px' }}>
+                  🔑 মূল প্রদর্শক লক্ষণসমূহ (Keynotes)
+                </h3>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {selectedRemedy.keynotes.map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: '8px', color: '#334155', fontSize: '14px', lineHeight: '1.5' }}>{item}</li>
                   ))}
                 </ul>
               </div>
-              <div>
-                <h4 style={{ color: '#1e293b', marginBottom: '8px' }}>🫄 পাকস্থলী ও পেটের লক্ষণ</h4>
-                <ul>
-                  {selectedRemedy.stomachAndAbdomen.map((s, idx) => (
-                    <li key={idx} style={{ fontSize: '14px', color: '#475569' }}>{s}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
 
-            {/* Modalities: Aggravation & Amelioration */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px' }}>
-              <div style={{ borderRight: '1px solid #e2e8f0', paddingRight: '10px' }}>
-                <h4 style={{ color: '#dc2626', marginTop: 0 }}>⚠️ রোগ বৃদ্ধি (Aggravation)</h4>
-                <ul>
-                  {selectedRemedy.aggravation.map((agg, idx) => (
-                    <li key={idx} style={{ fontSize: '13px', color: '#475569' }}>{agg}</li>
-                  ))}
-                </ul>
+              {/* প্রধান কার্যকরী অঙ্গসমূহ (Organ Affinities) */}
+              {selectedRemedy.organAffinities && selectedRemedy.organAffinities.length > 0 && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h3 style={{ color: '#0f172a', fontSize: '18px', borderBottom: '1px solid #cbd5e1', paddingBottom: '6px', marginBottom: '12px' }}>
+                    🎯 প্রধান কার্যকরী স্থান ও অঙ্গসমূহ (Organ Affinities)
+                  </h3>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {selectedRemedy.organAffinities.map((organ, idx) => (
+                      <span key={idx} style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold' }}>
+                        {organ}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* অঙ্গভিত্তিক লক্ষণসমূহ (গ্রিড) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+                {selectedRemedy.mindSymptoms && (
+                  <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ color: '#1e293b', margin: '0 0 10px 0', fontSize: '16px' }}>🧠 মানসিক লক্ষণ (Mind)</h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                      {selectedRemedy.mindSymptoms.map((m, idx) => (
+                        <li key={idx} style={{ fontSize: '13px', color: '#475569', marginBottom: '6px', lineHeight: '1.4' }}>{m}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {selectedRemedy.headAndNeck && (
+                  <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ color: '#1e293b', margin: '0 0 10px 0', fontSize: '16px' }}>🗣️ মাথা, চোখ ও গলা</h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                      {selectedRemedy.headAndNeck.map((h, idx) => (
+                        <li key={idx} style={{ fontSize: '13px', color: '#475569', marginBottom: '6px', lineHeight: '1.4' }}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {selectedRemedy.stomachAndAbdomen && (
+                  <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ color: '#1e293b', margin: '0 0 10px 0', fontSize: '16px' }}>🫄 পাকস্থলী ও পেটের লক্ষণ</h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                      {selectedRemedy.stomachAndAbdomen.map((s, idx) => (
+                        <li key={idx} style={{ fontSize: '13px', color: '#475569', marginBottom: '6px', lineHeight: '1.4' }}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {selectedRemedy.respiratory && (
+                  <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ color: '#1e293b', margin: '0 0 10px 0', fontSize: '16px' }}>🫁 শ্বাসযন্ত্র ও কাশি</h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                      {selectedRemedy.respiratory.map((r, idx) => (
+                        <li key={idx} style={{ fontSize: '13px', color: '#475569', marginBottom: '6px', lineHeight: '1.4' }}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-              <div>
-                <h4 style={{ color: '#16a34a', marginTop: 0 }}>☘️ রোগ উপশম (Amelioration)</h4>
-                <ul>
-                  {selectedRemedy.amelioration.map((amel, idx) => (
-                    <li key={idx} style={{ fontSize: '13px', color: '#475569' }}>{amel}</li>
-                  ))}
-                </ul>
+
+              {/* বৃদ্ধি ও উপশম (Modalities) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                <div>
+                  <h4 style={{ color: '#dc2626', margin: '0 0 8px 0', fontSize: '15px' }}>⚠️ রোগ বৃদ্ধি (Aggravation)</h4>
+                  <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                    {selectedRemedy.aggravation.map((agg, idx) => (
+                      <li key={idx} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px' }}>{agg}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 style={{ color: '#16a34a', margin: '0 0 8px 0', fontSize: '15px' }}>☘️ রোগ উপশম (Amelioration)</h4>
+                  <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                    {selectedRemedy.amelioration.map((amel, idx) => (
+                      <li key={idx} style={{ fontSize: '13px', color: '#475569', marginBottom: '4px' }}>{amel}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
+
+              {/* ওষুধের পারস্পরিক সম্পর্ক (Relationships) */}
+              {selectedRemedy.relationships && (
+                <div style={{ backgroundColor: '#fffbebfb', padding: '16px', borderRadius: '8px', border: '1px solid #fde68a', marginBottom: '30px' }}>
+                  <h4 style={{ color: '#b45309', margin: '0 0 10px 0', fontSize: '15px' }}>🔗 অন্যান্য ওষুধের সাথে সম্পর্ক (Relationships)</h4>
+                  <div style={{ fontSize: '13px', color: '#78350f', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {selectedRemedy.relationships.complementary && (
+                      <div><strong>পূরক ওষুধ (Complementary):</strong> {selectedRemedy.relationships.complementary.join(', ')}</div>
+                    )}
+                    {selectedRemedy.relationships.antidotes && (
+                      <div><strong>প্রতিষেধক (Antidotes):</strong> {selectedRemedy.relationships.antidotes.join(', ')}</div>
+                    )}
+                    {selectedRemedy.relationships.followsWell && (
+                      <div><strong>পরবর্তী ভালো ওষুধ (Follows Well):</strong> {selectedRemedy.relationships.followsWell.join(', ')}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
       </div>
     </div>
   );
