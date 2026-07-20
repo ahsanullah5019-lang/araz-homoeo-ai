@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { theme } from './utils/theme';
 import { Dashboard } from './screens/Dashboard';
 import { AddPatient } from './screens/AddPatient';
@@ -13,29 +13,49 @@ type ScreenType = 'dashboard' | 'add-patient' | 'case-taking' | 'repertory' | 'p
 
 export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
   const { selectedPatient, setSelectedPatient } = useAppStore();
   
-  // প্রেসক্রিপশন ডেটা লোকাল স্টেট
   const [activePrescription, setActivePrescription] = useState<any>(null);
 
-  // স্ক্রিন রেন্ডারিং লজিক
+  // স্ক্রিন সাইজ চেঞ্জ ট্র্যাক করা
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleNavClick = (screen: ScreenType) => {
+    setCurrentScreen(screen);
+    if (isMobile) {
+      setIsMobileMenuOpen(false); // মোবাইলে মেনু আইটেমে ক্লিক করলে মেনু বন্ধ হয়ে যাবে
+    }
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'dashboard':
         return (
           <Dashboard 
-            onAddPatientClick={() => setCurrentScreen('add-patient')}
+            onAddPatientClick={() => handleNavClick('add-patient')}
             onSelectPatient={(patient) => {
               setSelectedPatient(patient);
-              setCurrentScreen('case-taking');
+              handleNavClick('case-taking');
             }}
           />
         );
       case 'add-patient':
         return (
           <AddPatient 
-            onSuccess={() => setCurrentScreen('dashboard')} 
-            onCancel={() => setCurrentScreen('dashboard')} 
+            onSuccess={() => handleNavClick('dashboard')} 
+            onCancel={() => handleNavClick('dashboard')} 
           />
         );
       case 'case-taking':
@@ -45,9 +65,9 @@ export const App: React.FC = () => {
             patientName={selectedPatient?.name || 'কোনো রোগী সিলেক্ট করা হয়নি'} 
             onSave={(caseData) => {
               alert('কেস হিস্ট্রি সফলভাবে সংরক্ষিত হয়েছে!');
-              setCurrentScreen('repertory');
+              handleNavClick('repertory');
             }} 
-            onBack={() => setCurrentScreen('dashboard')} 
+            onBack={() => handleNavClick('dashboard')} 
           />
         );
       case 'repertory':
@@ -59,9 +79,9 @@ export const App: React.FC = () => {
             selectedRemedy="Ars" 
             onGenerate={(data) => {
               setActivePrescription(data);
-              setCurrentScreen('prescription-view');
+              handleNavClick('prescription-view');
             }} 
-            onCancel={() => setCurrentScreen('repertory')} 
+            onCancel={() => handleNavClick('repertory')} 
           />
         );
       case 'prescription-view':
@@ -73,7 +93,7 @@ export const App: React.FC = () => {
               gender: selectedPatient?.gender || 'পুরুষ'
             }} 
             prescriptionData={activePrescription} 
-            onBack={() => setCurrentScreen('prescription-build')} 
+            onBack={() => handleNavClick('prescription-build')} 
             onPrintShare={() => {
               window.print();
             }} 
@@ -84,10 +104,10 @@ export const App: React.FC = () => {
       default:
         return (
           <Dashboard 
-            onAddPatientClick={() => setCurrentScreen('add-patient')}
+            onAddPatientClick={() => handleNavClick('add-patient')}
             onSelectPatient={(patient) => {
               setSelectedPatient(patient);
-              setCurrentScreen('case-taking');
+              handleNavClick('case-taking');
             }}
           />
         );
@@ -95,79 +115,119 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: theme.colors.background }}>
-      {/* বাম পাশের নেভিগেশন বার */}
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh', backgroundColor: theme.colors.background }}>
+      
+      {/* মোবাইলের জন্য টপ নেভিগেশন বার */}
+      {isMobile && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: theme.colors.textPrimary,
+          color: '#fff',
+          padding: '12px 20px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '18px', fontFamily: theme.fonts.bold, color: theme.colors.secondary }}>
+            ARAZ Homoeo AI
+          </h2>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#fff',
+              fontSize: '24px',
+              cursor: 'pointer'
+            }}
+          >
+            {isMobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
+      )}
+
+      {/* সাইডবার নেভিগেশন (ডেস্কটপ এবং মোবাইল ড্রয়ার) */}
       <nav style={{
-        width: '260px',
+        width: isMobile ? '100%' : '260px',
         backgroundColor: theme.colors.textPrimary,
         color: '#fff',
-        display: 'flex',
+        display: isMobile ? (isMobileMenuOpen ? 'flex' : 'none') : 'flex',
         flexDirection: 'column',
         padding: '20px 10px',
-        justifyContent: 'space-between',
-        boxShadow: '2px 0 10px rgba(0,0,0,0.1)'
+         justifyContent: 'space-between',
+        boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
+        position: isMobile ? 'fixed' : 'relative',
+        top: isMobile ? '50px' : '0',
+        left: 0,
+        bottom: 0,
+        zIndex: 999,
+        overflowY: 'auto'
       }}>
         <div>
-          {/* লোগো/ব্র্যান্ড */}
-          <div style={{ padding: '10px 15px', marginBottom: '30px' }}>
-            <h2 style={{ margin: 0, fontSize: '20px', fontFamily: theme.fonts.bold, color: theme.colors.secondary }}>
-              ARAZ Homoeo AI
-            </h2>
-            <span style={{ fontSize: '11px', color: theme.colors.textSecondary }}>v1.0.0 Offline-First</span>
-          </div>
+          {!isMobile && (
+            <div style={{ padding: '10px 15px', marginBottom: '30px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontFamily: theme.fonts.bold, color: theme.colors.secondary }}>
+                ARAZ Homoeo AI
+              </h2>
+              <span style={{ fontSize: '11px', color: theme.colors.textSecondary }}>v1.0.0 Offline-First</span>
+            </div>
+          )}
 
           {/* নেভিগেশন লিংকসমূহ */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button 
-              onClick={() => setCurrentScreen('dashboard')}
+              onClick={() => handleNavClick('dashboard')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
                 fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'dashboard' ? theme.colors.primary : 'transparent',
-                color: '#fff', transition: 'all 0.2s'
+                color: '#fff'
               }}
             >
               👥 ড্যাশবোর্ড ও রোগী তালিকা
             </button>
 
             <button 
-              onClick={() => setCurrentScreen('add-patient')}
+              onClick={() => handleNavClick('add-patient')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
                 fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'add-patient' ? theme.colors.primary : 'transparent',
-                color: '#fff', transition: 'all 0.2s'
+                color: '#fff'
               }}
             >
               ➕ নতুন রোগী যোগ করুন
             </button>
 
             <button 
-              onClick={() => setCurrentScreen('case-taking')}
+              onClick={() => handleNavClick('case-taking')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
                 fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'case-taking' ? theme.colors.primary : 'transparent',
-                color: '#fff', transition: 'all 0.2s'
+                color: '#fff'
               }}
             >
               📝 গাইডেড কেস টেকিং
             </button>
 
             <button 
-              onClick={() => setCurrentScreen('repertory')}
+              onClick={() => handleNavClick('repertory')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
                 fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'repertory' ? theme.colors.primary : 'transparent',
-                color: '#fff', transition: 'all 0.2s'
+                color: '#fff'
               }}
             >
               📊 AI রেপার্টরি সার্চ
             </button>
 
             <button 
-              onClick={() => setCurrentScreen('prescription-build')}
+              onClick={() => handleNavClick('prescription-build')}
               style={{
                 width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
                 fontFamily: theme.fonts.bold, backgroundColor: ['prescription-build', 'prescription-view'].includes(currentScreen) ? theme.colors.primary : 'transparent',
-                color: '#fff', transition: 'all 0.2s'
+                color: '#fff'
               }}
             >
               📜 প্রেসক্রিপশন ইঞ্জিন
@@ -175,10 +235,9 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* নিচের সেটিংস পার্ট */}
         <div>
           <button 
-            onClick={() => setCurrentScreen('settings')}
+            onClick={() => handleNavClick('settings')}
             style={{
               width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
               fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'settings' ? theme.colors.primary : 'transparent',
@@ -190,8 +249,8 @@ export const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* ডান পাশের ডাইনামিক কন্টেন্ট এরিয়া */}
-      <main style={{ flex: 1, height: '100vh', overflowY: 'auto' }}>
+      {/* কন্টেন্ট এরিয়া */}
+      <main style={{ flex: 1, minHeight: '100vh', overflowY: 'auto' }}>
         {renderScreen()}
       </main>
     </div>
