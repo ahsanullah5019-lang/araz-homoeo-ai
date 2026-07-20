@@ -8,9 +8,21 @@ import { PrescriptionBuilder } from './screens/PrescriptionBuilder';
 import { PrescriptionPreview } from './screens/PrescriptionPreview';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { PatientHistory } from './screens/PatientHistory';
+import { MateriaMedica } from './screens/MateriaMedica';
+import { OrganExplorer } from './screens/OrganExplorer';
 import { useAppStore } from './store/useAppStore';
 
-type ScreenType = 'dashboard' | 'add-patient' | 'case-taking' | 'patient-history' | 'repertory' | 'prescription-build' | 'prescription-view' | 'settings';
+type ScreenType = 
+  | 'dashboard' 
+  | 'add-patient' 
+  | 'case-taking' 
+  | 'patient-history' 
+  | 'repertory' 
+  | 'materia-medica'
+  | 'organ-explorer'
+  | 'prescription-build' 
+  | 'prescription-view' 
+  | 'settings';
 
 export const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('dashboard');
@@ -18,7 +30,7 @@ export const App: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
   const { selectedPatient, setSelectedPatient } = useAppStore();
   
-  // কেস টেকিং ও রেপার্টরি থেকে ডাটা শেয়ারিং স্টেট
+  // কেস টেকিং ও রেপার্টরি থেকে ডাটা শেয়ারিং স্টেট
   const [lastCaseData, setLastCaseData] = useState<any>(null);
   const [selectedRemedy, setSelectedRemedy] = useState<string>('Ars');
   const [activePrescription, setActivePrescription] = useState<any>(null);
@@ -39,7 +51,7 @@ export const App: React.FC = () => {
   const handleNavClick = (screen: ScreenType) => {
     setCurrentScreen(screen);
     if (isMobile) {
-      setIsMobileMenuOpen(false); // মোবাইলে মেনু আইটেমে ক্লিক করলে মেনু বন্ধ হয়ে যাবে
+      setIsMobileMenuOpen(false); // মোবাইলে মেনু আইটেমে ক্লিক করলে মেনু বন্ধ হয়ে যাবে
     }
   };
 
@@ -66,10 +78,10 @@ export const App: React.FC = () => {
         return (
           <CaseTaking 
             patientId={selectedPatient?.id || ''} 
-            patientName={selectedPatient?.name || 'কোনো রোগী সিলেক্ট করা হয়নি'} 
+            patientName={selectedPatient?.name || 'কোনো রোগী সিলেক্ট করা হয়নি'} 
             onSave={(caseData) => {
-              setLastCaseData(caseData); // কেস টেকিংয়ের লক্ষণ স্টোর করা হলো
-              alert('কেস হিস্ট্রি সফলভাবে সংরক্ষিত হয়েছে!');
+              setLastCaseData(caseData); // কেস টেকিংয়ের লক্ষণ স্টোর করা হলো
+              alert('কেস হিস্ট্রি সফলভাবে সংরক্ষিত হয়েছে!');
               handleNavClick('repertory'); // সরাসরি রেপার্টরি স্ক্রিনে পাঠাবে
             }} 
             onBack={() => handleNavClick('dashboard')} 
@@ -80,7 +92,7 @@ export const App: React.FC = () => {
           <PatientHistory 
             onEditCase={(caseData) => {
               setLastCaseData(caseData);
-              handleNavClick('case-taking'); // লক্ষণ সংশোধন বা নতুন লক্ষণ যোগ করতে কেস টেকিংয়ে যাবে
+              handleNavClick('case-taking'); // লক্ষণ সংশোধন বা নতুন লক্ষণ যোগ করতে কেস টেকিংয়ে যাবে
             }}
             onGoToRepertory={(symptomsSummary) => {
               setLastCaseData({ symptomsSummary });
@@ -95,9 +107,25 @@ export const App: React.FC = () => {
             patientName={selectedPatient?.name}
             initialSymptoms={lastCaseData?.symptomsSummary || ''} 
             onSelectRemedyForPrescription={(remedyName) => {
-              setSelectedRemedy(remedyName); // সিলেক্ট করা ওষুধ রেপার্টরি থেকে নেওয়া হলো
+              setSelectedRemedy(remedyName); // সিলেক্ট করা ওষুধ রেপার্টরি থেকে নেওয়া হলো
               handleNavClick('prescription-build');
             }}
+          />
+        );
+      case 'materia-medica':
+        return (
+          <MateriaMedica 
+            onBack={() => handleNavClick('dashboard')}
+          />
+        );
+      case 'organ-explorer':
+        return (
+          <OrganExplorer 
+            onSelectCondition={(condition) => {
+              setLastCaseData({ symptomsSummary: `${condition.nameBn}: ${condition.commonSymptoms.join(', ')}` });
+              handleNavClick('repertory');
+            }}
+            onBack={() => handleNavClick('dashboard')}
           />
         );
       case 'prescription-build':
@@ -259,6 +287,28 @@ export const App: React.FC = () => {
               }}
             >
               📊 AI রেপার্টরি সার্চ
+            </button>
+
+            <button 
+              onClick={() => handleNavClick('materia-medica')}
+              style={{
+                width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
+                fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'materia-medica' ? theme.colors.primary : 'transparent',
+                color: '#fff'
+              }}
+            >
+              📚 মেটেরিয়া মেডিকা
+            </button>
+
+            <button 
+              onClick={() => handleNavClick('organ-explorer')}
+              style={{
+                width: '100%', padding: '12px 15px', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer',
+                fontFamily: theme.fonts.bold, backgroundColor: currentScreen === 'organ-explorer' ? theme.colors.primary : 'transparent',
+                color: '#fff'
+              }}
+            >
+              👁️ অর্গান এক্সপ্লোরার
             </button>
 
             <button 
