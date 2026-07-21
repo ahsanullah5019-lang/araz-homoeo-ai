@@ -2888,5 +2888,247 @@ export const MATERIA_MEDICA_DATABASE: Record<string, RemedyInfo> = {
       followsWell: ['Ars', 'Canth', 'Puls']
     },
     summary: 'প্রচুর সর্দি-হাঁচি, প্রস্রাবের যন্ত্রণাদায়ক আটকে থাকা এবং পেট ফাঁপায় কার্যকর।'
+  },
+  
+  'Eup-per': {
+    id: 'Eup-per',
+    name: 'Eupatorium Perfoliatum',
+    latinName: 'Eupatorium Perfoliatum',
+    commonName: 'Boneset',
+    keynotes: [
+      'হাড়ে মারাত্মক ভাঙা বা থেঁতলে যাওয়ার মতো তীব্র ব্যথা (Bone-breaking pain)',
+      'জ্বরের শীত অবস্থার আগে বা শুরুতে তীব্র পানির পিপাসা',
+      'চোখের গোলক অত্যন্ত স্পর্শকাতর ও চাপ দিলে তীব্র ব্যথা অনুভূতি'
+    ],
+    organAffinities: ['Bones', 'Muscles', 'Liver', 'Mucous Membranes'],
+    mindSymptoms: [
+      'শরীরের তীব্র হাড় ভাঙা ব্যথার জন্য রোগী ছটফট করে কিন্তু নড়াচড়া করলে কষ্ট বাড়ে',
+      'মানসিক অস্থিরতা ও বিষণ্ণতা'
+    ],
+    headAndNeck: [
+      'কপালে ও মাথার পেছনে ভারী চাপ ধরা ব্যথা',
+      'চোখ লাল হওয়া ও চোখের পেছনের হাড়ে প্রচণ্ড যন্ত্রণা'
+    ],
+    stomachAndAbdomen: [
+      'পিত্তবমি (Bilious vomiting) ও পাকস্থলীতে চরম স্পর্শকাতরতা',
+      'যকৃতের স্থানে ভারী ভাব ও চাপ ধরা ব্যথা'
+    ],
+    respiratory: [
+      'বুকে ক্ষতজনক ব্যথা, কাশি দেওয়ার সময় বুকে হাত দিয়ে ধরে রাখতে হয়'
+    ],
+    extremitiesAndSkin: [
+      'পিঠ, কোমর ও হাত-পায়ের হাড়ে যেন হাতুড়ি দিয়ে পেটানোর মতো ব্যথা',
+      'ত্বক হলুদ বা জন্ডিস আক্রান্ত ভাব'
+    ],
+    aggravation: ['সকাল ৭টা থেকে ৯টায় (জ্বরের বেগ)', 'নড়াচড়ায়', 'ঠান্ডা বাতাসে'],
+    amelioration: ['ঘাম হলে', 'হাঁটু ও হাতের ওপর ভর দিয়ে উপুড় হলে'],
+    relationships: {
+      complementary: ['Natrum Mur'],
+      antidotes: ['Bryonia'],
+      followsWell: ['Ars', 'Bry', 'Merc', 'Rhus-t']
+    },
+    summary: 'ডেঙ্গু বা ইনফ্লুয়েঞ্জা জ্বরের হাড় ভাঙা ব্যথা, পিত্তবমি ও কাশির কষ্টে অন্যতম সেরা ওষুধ।'
+  },
+
+  'Hyos': {
+    id: 'Hyos',
+    name: 'Hyoscyamus Niger',
+    latinName: 'Hyoscyamus Niger',
+    commonName: 'Henbane',
+    keynotes: [
+      'প্রচণ্ড হিংসা, সন্দেহ ও লজ্জা-শরমহীন উন্মাদনা (Jealousy, Suspicion, Nymphomania)',
+      'বিছানা থেকে পরনের জামাকাপড় খুলে বা খুলে ফেলার চেষ্টা করা',
+      'শুলেই শুষ্ক কাশি শুরু হওয়া, যা সোজা হয়ে বসলেই বন্ধ হয়ে যায়'
+    ],
+    organAffinities: ['Mind', 'Brain', 'Nerves', 'Respiratory Organs'],
+    mindSymptoms: [
+      'মনে করে তাকে বিষ খাওয়ানো হচ্ছে, তাই ওষুধ বা খাবার খেতে চায় না',
+      'লজ্জাহীনতা, নগ্ন হওয়ার প্রবণতা এবং কামোদ্দীপক অঙ্গভঙ্গি করা'
+    ],
+    headAndNeck: [
+      'চোখ রক্তবর্ণ, বড় বড় করে তাকানো ও পুতুলের মতো স্থির থাকা',
+      'জিহ্বা শুষ্ক, লাল ও মুখ খুলতে না চাওয়া'
+    ],
+    stomachAndAbdomen: [
+      'পেটে গ্যাস ও পেট ফোলা, অনৈচ্ছিক পায়খানা ও প্রস্রাব ত্যাগ'
+    ],
+    respiratory: [
+      'রাতে শুলেই তীব্র শুকনো খসখসে কাশি, যা বসে পড়লে সম্পূর্ণ কমে যায়'
+    ],
+    extremitiesAndSkin: [
+      'মাংসপেশীতে অনবরত ঝাঁকুনি, খিঁচুনি ও শূন্যে হাত দিয়ে কিছু ধরার চেষ্টা (Carphologia)',
+      'ত্বক শুষ্ক ও লালচে ফোসকাযুক্ত'
+    ],
+    aggravation: ['রাতে', 'শুয়ে পড়লে', 'ঋতুস্রাবের সময়', 'মানসিক উত্তেজনায়'],
+    amelioration: ['সোজা হয়ে বসলে', 'উষ্ণতায়'],
+    relationships: {
+      complementary: ['Belladonna'],
+      antidotes: ['Belladonna', 'Camphora'],
+      followsWell: ['Bell', 'Op', 'Puls', 'Stram']
+    },
+    summary: 'সন্দেহপ্রবণতা, জামাকাপড় খুলে ফেলার উন্মাদনা এবং শুলেই কাশির উপশমে বসে থাকায় মহা-ওষুধ।'
+  },
+
+  
+  'Ipec': {
+    id: 'Ipecacuanha',
+    name: 'Ipecacuanha',
+    latinName: 'Cephaelis Ipecacuanha',
+    commonName: 'Ipecac',
+    keynotes: [
+      'একটানা মারাত্মক বমি ভাব যা বমি করার পরও কমে না (Persistent nausea unrelieved by vomiting)',
+      'জিহ্বা সম্পূর্ণ পরিষ্কার ও লাল থাকা সত্ত্বেও পেটের সমস্যা (Clean tongue)',
+      'প্রচুর তাজা লাল রক্তস্রাব (Profuse bright red hemorrhage)'
+    ],
+    organAffinities: ['Respiratory Tract', 'Gastrointestinal Tract', 'Blood'],
+    mindSymptoms: [
+      'রোগী চরম খিটখিটে, অসন্তুষ্ট এবং যা চায় তা পেলেও অপছন্দ করে',
+      'রোগের কষ্টে অন্যদের তুচ্ছজ্ঞান করার মানসিকতা'
+    ],
+    headAndNeck: [
+      'মাথায় থেঁতলে যাওয়ার মতো ব্যথা, বমি ভাবের সাথে বাড়ে',
+      'নাক দিয়ে তাজা লাল রক্ত পড়া'
+    ],
+    stomachAndAbdomen: [
+      'পাকস্থলী যেন ঝুলে পড়েছে বা শিথিল হয়ে আছে এমন অনুভব',
+      'পেটে মোচড়ানো ব্যথা ও নাভির চারপাশে তীব্র অস্বস্তি'
+    ],
+    respiratory: [
+      'বুকে শ্লেষ্মার প্রচুর ঘড়ঘড় শব্দ কিন্তু কফ বের হয় না',
+      'দমবন্ধ করা কাশি, কাশির সাথে বমি ও মুখ নীল হয়ে যাওয়া'
+    ],
+    extremitiesAndSkin: [
+      'এক হাত বরফের মতো ঠান্ডা আর অন্য হাত গরম থাকা',
+      'ত্বকে ছোট ছোট ফোসকা ও লালচে ফুসকুড়ি'
+    ],
+    aggravation: ['আর্দ্র গরমে', 'নড়াচড়ায়', 'মিষ্টি ও কাঁচা ফল খেলে'],
+    amelioration: ['খোলা বাতাসে', 'বিশ্রামে'],
+    relationships: {
+      complementary: ['Cuprum Metallicum'],
+      antidotes: ['Arnica', 'Tabacum'],
+      followsWell: ['Ars', 'Ant-t', 'Bry', 'Puls']
+    },
+    summary: 'স্থায়ী বমি ভাব, পরিষ্কার জিহ্বা, তাজা রক্তস্রাব ও কফের ঘড়ঘড় শব্দে এটি অপ্রতিদ্বন্দ্বী।'
+  },
+
+  
+  'Merc-cor': {
+    id: 'Merc-cor',
+    name: 'Mercurius Corrosivus',
+    latinName: 'Mercurius Corrosivus',
+    commonName: 'Corrosive Sublimate',
+    keynotes: [
+      'পায়খানা ও প্রস্রাবে তীব্র যন্ত্রণাদায়ক অনবরত কোঁথানি (Severe tenesmus in rectum & bladder)',
+      'প্রস্রাব অত্যন্ত ক্ষতিকারক, জ্বালাকর ও অল্প পরিমাণে ফোটা ফোটা নির্গমন',
+      'শরীরের সমস্ত নিঃসৃত শ্লেষ্মা বা পুঁজ মারাত্মক ক্ষয়কারী ও ছিলে ফেলার মতো'
+    ],
+    organAffinities: ['Mucous Membranes', 'Kidneys', 'Bladder', 'Colon'],
+    mindSymptoms: [
+      'অস্থিরতা, মৃত্যুভয় ও চরম উদ্বেগ',
+      'বুদ্ধিহীনতা ও কাজে মন বসাতে মারাত্মক কষ্ট'
+    ],
+    headAndNeck: [
+      'চোখের পাতায় তীব্র ফোলা, ক্ষত ও প্রচুর জ্বালাকর পানি পড়া',
+      'মাড়িতে ক্ষয়কারী ঘা, তীব্র দুর্গন্ধ ও প্রচুর লালাস্রাব'
+    ],
+    stomachAndAbdomen: [
+      'পাকস্থলীতে জ্বালাপোড়া ও বমি',
+      'অন্ত্রে তীব্র কোঁথানি, রক্ত ও মিউকাসযুক্ত আমাশয় যা পায়খানার পরেও কমে না'
+    ],
+    respiratory: [
+      'ল্যারিংস ও শ্বাসনালীতে তীব্র ক্ষতজনক জ্বালা ও কাশি'
+    ],
+    extremitiesAndSkin: [
+      'হাত-পা কাঁপা ও আড়ষ্ট ভাব',
+      'ত্বকে পচনশীল গভীর ক্ষতিকারক ঘা'
+    ],
+    aggravation: ['রাতে', 'শরীরের উত্তাপে', 'পায়খানা বা প্রস্রাব করার সময়'],
+    amelioration: ['বিশ্রামে', 'ঠান্ডা বাতাসে'],
+    relationships: {
+      complementary: ['Sulphur'],
+      antidotes: ['Silicea', 'Hepar Sulph'],
+      followsWell: ['Acon', 'Bell', 'Nit-ac', 'Nux-v']
+    },
+    summary: 'মারাত্মক রক্ত আমাশয়, পায়খানা-প্রস্রাবে অসহ্য কোঁথানি ও ক্ষয়কারী ঘা-এর প্রধান ওষুধ।'
+  },
+
+  'Op': {
+    id: 'Opium',
+    name: 'Opium / Papaver Somniferum',
+    latinName: 'Papaver Somniferum',
+    commonName: 'Poppy',
+    keynotes: [
+      'গভীর অচৈতন্য ঘুম, নাক ডাকার শব্দ ও মুখমণ্ডল কালচে-লাল (Comatose sleep with stertorous breathing)',
+      'শরীরে কোনো ব্যথার অনুভূতি বা সাড়া না থাকা (Painlessness of all complaints)',
+      'ভয়ানক কোষ্ঠকাঠিন্য, মলদ্বারে মল জমে কালো বলের মতো থাকা কিন্তু বেগ একেবারেই না থাকা'
+    ],
+    organAffinities: ['Brain', 'Nervous System', 'Gastrointestinal Tract', 'Mind'],
+    mindSymptoms: [
+      'হঠাৎ খুব ভয় পেয়ে রোগ সৃষ্টি (Fright/Fear)',
+      'কোনো কষ্টেই অভিযোগ করে না, মনে করে সে সম্পূর্ণ সুস্থ ও ঠিক আছে'
+    ],
+    headAndNeck: [
+      'চোখের তারা (Pupils) একদম ছোট হয়ে সুঁচের বিন্দুর মতো হওয়া (Pin-point pupils)',
+      'মুখ লাল, ঘামে ভেজা ও মুখ হাঁ করে ঘুমাল নাক ডাকার বিকট শব্দ'
+    ],
+    stomachAndAbdomen: [
+      'অন্ত্রের অচল অবস্থা (Paralytic ileus), পেট ফুলে থাকা',
+      'মলদ্বারে কোঁথানি বা বেগ বলতে কিছুই নেই, মল কালো শুকনা বলের মতো'
+    ],
+    respiratory: [
+      'শ্বাসপ্রশ্বাস অত্যন্ত ধীর, অসম ও দমবন্ধ হওয়ার মতো অবস্থা'
+    ],
+    extremitiesAndSkin: [
+      'হাত-পা পক্ষাঘাতগ্রস্তের মতো অবশ ও নিস্তেজ',
+      'গরম আঠালো ঘামে সারা শরীর ভেজা'
+    ],
+    aggravation: ['গরমে ও উত্তাপে', 'ঘুমের সময় ও পরে', 'ভয় পাওয়ার পর'],
+    amelioration: ['ঠান্ডায়', 'অনবরত হাঁটাচলা করলে'],
+    relationships: {
+      complementary: ['Plumbum Metallicum'],
+      antidotes: ['Belladonna', 'Camphora', 'Coffea'],
+      followsWell: ['Acon', 'Bell', 'Hyos', 'Stram']
+    },
+    summary: 'ব্যথাহীনতা, গভীর নাকডাকা ঘুম, ভয়ের কুফল ও পক্ষাঘাতগ্রস্ত কোষ্ঠকাঠিন্যে একমাত্র ওষুধ।'
+  },
+
+  'Pyrog': {
+    id: 'Pyrog',
+    name: 'Pyrogenium',
+    latinName: 'Pyrogenium',
+    commonName: 'Rotten Beef Product',
+    keynotes: [
+      'নাড়ির স্পন্দন ও শরীরের তাপমাত্রার মধ্যে মারাত্মক অসামঞ্জস্য (Disproportion between pulse & temp)',
+      'বিছানা এত শক্ত মনে হয় যে রোগী অনবরত এপাশ-ওপাশ স্থান পরিবর্তন করে (Bed feels too hard)',
+      'শরীরের সমস্ত নিসৃত বস্তু, ঘাম, বমি ও প্রস্রাবে পচা ও দুর্গন্ধ'
+    ],
+    organAffinities: ['Blood', 'Heart', 'Circulation', 'Cellular Tissue'],
+    mindSymptoms: [
+      'অসুস্থ অবস্থায় মনে করে সে দুটি লোক বা তার শরীর একাধিক খণ্ডে বিভক্ত',
+      'মানসিক অস্থিরতা, শান্ত থাকতে পারে না'
+    ],
+    headAndNeck: [
+      'মাথায় দপধপে যন্ত্রণা ও মুখমণ্ডল থমথমে লাল',
+      'জিহ্বা শুষ্ক, মসৃণ, লাল ও কাঁচের মতো চকচকে'
+    ],
+    stomachAndAbdomen: [
+      'পাকস্থলীতে মারাত্মক পচা বা কালচে কফির মতো বমি',
+      'পেটে সেপ্টিক ঘা ও পচা গন্ধযুক্ত পায়খানা'
+    ],
+    respiratory: [
+      'বুকে কাশির সাথে রক্ত ও কফে মারাত্মক পচা গন্ধ'
+    ],
+    extremitiesAndSkin: [
+      'সারা শরীরে থ্যাঁতলানো ব্যথা, অস্থির হয়ে নড়াচড়া করে (Rhus-t এর মতো)',
+      'সেপ্টিক বা বিষাক্ত ফোড়া ও চর্মরোগ'
+    ],
+    aggravation: ['বিশ্রামে', 'আক্রান্ত পাশে শুলে'],
+    amelioration: ['অনবরত নড়াচড়ায় ও হাঁটাচলা করলে', 'উষ্ণতায়'],
+    relationships: {
+      complementary: ['Baptisia'],
+      antidotes: ['Echinacea'],
+      followsWell: ['Ars', 'Bap', 'Echin', 'Rhus-t']
+    },
+    summary: 'পচা সেপ্টিক জ্বর, নাড়ি ও তাপমাত্রার অমিল এবং বিছানা শক্ত মনে হওয়ার লক্ষণে প্রধান হোমিও নোসোড।'
   } 
 };
