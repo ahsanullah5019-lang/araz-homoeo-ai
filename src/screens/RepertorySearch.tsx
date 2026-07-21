@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { theme } from '../utils/theme';
 import { REPERTORY_DATABASE, Rubric, Chapter } from '../data/repertoryData';
 
@@ -12,19 +12,21 @@ interface SelectedRubricItem {
 interface RepertorySearchProps {
   patientName?: string;
   initialSymptoms?: string;
+  initialRubrics?: string[]; // CaseTaking থেকে পাঠানো রুব্রিক আইডিগুলোর লিস্ট
   onSelectRemedyForPrescription?: (remedyName: string) => void;
 }
 
 export const RepertorySearch: React.FC<RepertorySearchProps> = ({
   patientName,
   initialSymptoms,
+  initialRubrics = [],
   onSelectRemedyForPrescription
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedChapterId, setSelectedChapterId] = useState<string>('all');
   const [selectedRubrics, setSelectedRubrics] = useState<SelectedRubricItem[]>([]);
 
-  // ১. আসল REPERTORY_DATABASE থেকে চ্যাপ্টার ও সার্চ টার্ম অনুযায়ী রুব্রিক ফিল্টার
+  // ১. আসল REPERTORY_DATABASE থেকে সকল চ্যাপ্টারের রুব্রিক ফ্ল্যাট লিস্টে আনা
   const getAllRubrics = (): { rubric: Rubric; chapterName: string }[] => {
     let list: { rubric: Rubric; chapterName: string }[] = [];
 
@@ -42,6 +44,31 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
     return list;
   };
 
+  // ২. CaseTaking থেকে প্রপস হিসেবে আসা initialRubrics অটো সিলেক্ট করা
+  useEffect(() => {
+    if (initialRubrics && initialRubrics.length > 0) {
+      const initialSelectedList: SelectedRubricItem[] = [];
+
+      REPERTORY_DATABASE.forEach((chapter: Chapter) => {
+        chapter.rubrics.forEach((rubric: Rubric) => {
+          if (initialRubrics.includes(rubric.id)) {
+            // ডুপ্লিকেট এড়াতে চেক
+            if (!initialSelectedList.some(item => item.id === rubric.id)) {
+              initialSelectedList.push({
+                id: rubric.id,
+                nameEn: rubric.nameEn,
+                nameBn: rubric.nameBn,
+                remedies: rubric.remedies
+              });
+            }
+          }
+        });
+      });
+
+      setSelectedRubrics(initialSelectedList);
+    }
+  }, [initialRubrics]);
+
   const allRubricsList = getAllRubrics();
 
   const filteredRubrics = allRubricsList.filter(({ rubric }) => {
@@ -55,7 +82,7 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
     return matchesSearch && isNotSelected;
   });
 
-  // ২. রুব্রিক সিলেক্ট ও রিমুভ ফাংশন
+  // ৩. রুব্রিক সিলেক্ট ও রিমুভ ফাংশন
   const handleSelectRubric = (rubric: Rubric) => {
     setSelectedRubrics(prev => [
       ...prev,
@@ -73,7 +100,7 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
     setSelectedRubrics(prev => prev.filter(rubric => rubric.id !== id));
   };
 
-  // ৩. ক্লাসিক্যাল রেপার্টরাইজেশন লজিক (লক্ষণ ম্যাচিং + গ্রেড পয়েন্ট স্কোরিং)
+  // ৪. ক্লাসিক্যাল রেপার্টরাইজেশন লজিক (লক্ষণ ম্যাচিং + গ্রেড পয়েন্ট স্কোরিং)
   const calculateRemedyRanking = () => {
     const ranking: Record<string, { totalPoints: number; matchCount: number }> = {};
 
@@ -211,7 +238,7 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
                       cursor: 'pointer',
                       fontSize: '14px',
                       display: 'flex',
-                      justifyContent: 'space-between',
+                     justifyContent: 'space-between',
                       alignItems: 'center'
                     }}
                   >
@@ -242,7 +269,7 @@ export const RepertorySearch: React.FC<RepertorySearchProps> = ({
                     key={rubric.id}
                     style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
+                     justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '10px',
                       backgroundColor: theme.colors.background,

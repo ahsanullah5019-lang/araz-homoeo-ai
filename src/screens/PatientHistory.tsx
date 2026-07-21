@@ -12,13 +12,15 @@ export interface CaseRecord {
   physicalGenerals?: string;
   foodDesires?: string;
   sleepDream?: string;
+  selectedRubrics?: string[]; // সিলেক্ট করা রুব্রিকের আইডি
+  imageUrl?: string | null;   // আপলোড করা ছবির লিংক বা Base64
   symptomsSummary?: string;
   createdAt?: string | Date;
 }
 
 interface PatientHistoryProps {
   onEditCase: (caseData: CaseRecord) => void;
-  onGoToRepertory: (symptomsSummary: string) => void;
+  onGoToRepertory: (symptomsSummary: string, selectedRubrics?: string[]) => void;
   onBack: () => void;
 }
 
@@ -27,7 +29,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({
   onGoToRepertory,
   onBack
 }) => {
-  // useAppStore থেকে টাইপ-সেফ ডেটা নেওয়া
+  // useAppStore থেকে টাইপ-সেফ ডেটা নেওয়া
   const store = useAppStore() as any;
   const selectedPatient = store.selectedPatient;
   const casesList: CaseRecord[] = store.cases || store.patientCases || [];
@@ -145,6 +147,25 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({
                     {caseItem.physicalGenerals && <div><strong>শারীরিক সাধারণ:</strong> {caseItem.physicalGenerals}</div>}
                     {caseItem.foodDesires && <div><strong>খাদ্য ও তৃষ্ণা:</strong> {caseItem.foodDesires}</div>}
                     {caseItem.sleepDream && <div><strong>ঘুম ও স্বপ্ন:</strong> {caseItem.sleepDream}</div>}
+                    
+                    {/* নির্বাচিত রুব্রিক সংখ্যা */}
+                    {caseItem.selectedRubrics && caseItem.selectedRubrics.length > 0 && (
+                      <div><strong>সংযুক্ত রুব্রিক্স:</strong> {caseItem.selectedRubrics.length} টি রুব্রিক নির্বাচন করা আছে</div>
+                    )}
+
+                    {/* রোগীর ছবির প্রিভিউ (যদি থাকে) */}
+                    {caseItem.imageUrl && (
+                      <div style={{ marginTop: '5px' }}>
+                        <strong>সংযুক্ত ছবি:</strong>
+                        <div style={{ marginTop: '5px' }}>
+                          <img 
+                            src={caseItem.imageUrl} 
+                            alt="Patient Symptom" 
+                            style={{ maxHeight: '120px', borderRadius: '6px', border: `1px solid ${theme.colors.border}` }} 
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -183,7 +204,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({
                   </button>
 
                   <button
-                    onClick={() => onGoToRepertory(caseItem.symptomsSummary || '')}
+                    onClick={() => onGoToRepertory(caseItem.symptomsSummary || '', caseItem.selectedRubrics)}
                     style={{
                       backgroundColor: theme.colors.primary,
                       color: '#fff',

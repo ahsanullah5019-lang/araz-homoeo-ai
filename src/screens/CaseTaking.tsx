@@ -10,6 +10,8 @@ export interface CaseData {
   physicalGenerals: string;
   foodDesires: string;
   sleepDream: string;
+  selectedRubrics: string[];
+  imageUrl?: string | null;
   symptomsSummary: string;
   createdAt: Date;
 }
@@ -19,8 +21,23 @@ interface CaseTakingProps {
   patientName: string;
   onSave: (caseData: CaseData) => void;
   onBack: () => void;
-  onNavigateToRepertory?: (symptomsSummary: string) => void;
+  onNavigateToRepertory?: (symptomsSummary: string, selectedRubrics: string[]) => void;
 }
+
+// নমুনা রুব্রিক তালিকা (আপনার প্রয়োজনমতো আরও যুক্ত করতে পারবেন)
+const AVAILABLE_RUBRICS = [
+  { id: 'm1', category: 'মানসিক', name: 'স্বাস্থ্য নিয়ে অতিরিক্ত উদ্বেগ (Anxiety about health)' },
+  { id: 'm2', category: 'মানসিক', name: 'অন্ধকারের ভয় (Fear of darkness)' },
+  { id: 'm3', category: 'মানসিক', name: 'সান্ত্বনায় রোগ বৃদ্ধি (Consolation aggravates)' },
+  { id: 'm4', category: 'মানসিক', name: 'গভীর শোক বা প্রেমে ব্যর্থতা (Grief / Disappointment)' },
+  { id: 'h1', category: 'মাথা', name: 'প্রস্রাব হলে মাথাব্যথা কমে (Headache amel. by urination)' },
+  { id: 'h2', category: 'মাথা', name: 'রোদের তাপে মাথাব্যথা (Headache from sun)' },
+  { id: 'p1', category: 'শারীরিক', name: 'মিষ্টি খাওয়ার প্রবল ইচ্ছা (Desire for sweets)' },
+  { id: 'p2', category: 'শারীরিক', name: 'বরফ ঠান্ডা পানি পানের ইচ্ছা (Desire for cold drinks)' },
+  { id: 'p3', category: 'শারীরিক', name: 'কপালে ঠান্ডা ঘাম (Cold sweat on forehead)' },
+  { id: 's1', category: 'পেট', name: 'বমি করলেও বমি ভাব কমে না (Persistent nausea)' },
+  { id: 's2', category: 'পেট', name: 'ডান কাঁধের হাড়ে বা লিভারে ব্যথা (Pain in right scapula)' }
+];
 
 export const CaseTaking: React.FC<CaseTakingProps> = ({
   patientId,
@@ -29,7 +46,10 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
   onBack,
   onNavigateToRepertory
 }) => {
-  const [activeTab, setActiveTab] = useState<'chief' | 'mental' | 'physical'>('chief');
+  const [activeTab, setActiveTab] = useState<'chief' | 'mental' | 'physical' | 'rubrics'>('chief');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedRubrics, setSelectedRubrics] = useState<string[]>([]);
+
   const [caseState, setCaseState] = useState({
     chiefComplaints: '',
     modalities: '',
@@ -38,6 +58,25 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
     foodDesires: '',
     sleepDream: ''
   });
+
+  // ছবি আপলোড হ্যান্ডলার
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // রুব্রিক নির্বাচন
+  const toggleRubric = (rubricId: string) => {
+    setSelectedRubrics(prev =>
+      prev.includes(rubricId) ? prev.filter(id => id !== rubricId) : [...prev, rubricId]
+    );
+  };
 
   // সংগৃহীত সব লক্ষণ একত্র করে একটি সামারি তৈরি
   const buildSymptomsSummary = () => {
@@ -53,30 +92,32 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
       .join('. ');
   };
 
-  const handleSave = () => {
+  const handleSave = (): CaseData | null => {
     const fullSymptomText = buildSymptomsSummary();
 
-    if (!fullSymptomText.trim()) {
-      alert('অনুগ্রহ করে অন্তত একটি ঘরে তথ্য লিখুন।');
-      return;
+    if (!fullSymptomText.trim() && selectedRubrics.length === 0) {
+      alert('অনুগ্রহ করে অন্তত একটি ঘরে তথ্য লিখুন বা রুব্রিক নির্বাচন করুন।');
+      return null;
     }
 
     const caseData: CaseData = {
       patientId,
       patientName,
       ...caseState,
+      selectedRubrics,
+      imageUrl: imagePreview,
       symptomsSummary: fullSymptomText,
       createdAt: new Date()
     };
 
     onSave(caseData);
+    return caseData;
   };
 
   const handleSaveAndRepertorize = () => {
-    const summary = buildSymptomsSummary();
-    handleSave();
-    if (onNavigateToRepertory && summary) {
-      onNavigateToRepertory(summary);
+    const savedData = handleSave();
+    if (savedData && onNavigateToRepertory) {
+      onNavigateToRepertory(savedData.symptomsSummary, savedData.selectedRubrics);
     }
   };
 
@@ -105,7 +146,7 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
+        justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '15px',
           flexWrap: 'wrap',
@@ -135,7 +176,7 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
-            onClick={handleSave}
+            onClick={() => handleSave()}
             style={{
               backgroundColor: theme.colors.surface,
               color: theme.colors.primary,
@@ -170,7 +211,7 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
         </div>
       </div>
 
-      {/* ট্যাব নেভিগেশন (মোবাইল ফ্রেন্ডলি) */}
+      {/* ট্যাব নেভিগেশন */}
       <div
         style={{
           display: 'flex',
@@ -182,57 +223,31 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
           whiteSpace: 'nowrap'
         }}
       >
-        <button
-          onClick={() => setActiveTab('chief')}
-          style={{
-            flex: 1,
-            minWidth: '130px',
-            padding: '12px 10px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontFamily: theme.fonts.bold,
-            fontSize: '13px',
-            color: activeTab === 'chief' ? theme.colors.primary : theme.colors.textSecondary,
-            borderBottom: activeTab === 'chief' ? `3px solid ${theme.colors.primary}` : 'none'
-          }}
-        >
-          ১. প্রধান লক্ষণ ও বৃদ্ধি
-        </button>
-        <button
-          onClick={() => setActiveTab('mental')}
-          style={{
-            flex: 1,
-            minWidth: '130px',
-            padding: '12px 10px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontFamily: theme.fonts.bold,
-            fontSize: '13px',
-            color: activeTab === 'mental' ? theme.colors.primary : theme.colors.textSecondary,
-            borderBottom: activeTab === 'mental' ? `3px solid ${theme.colors.primary}` : 'none'
-          }}
-        >
-          ২. মানসিক লক্ষণ
-        </button>
-        <button
-          onClick={() => setActiveTab('physical')}
-          style={{
-            flex: 1,
-            minWidth: '130px',
-            padding: '12px 10px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontFamily: theme.fonts.bold,
-            fontSize: '13px',
-            color: activeTab === 'physical' ? theme.colors.primary : theme.colors.textSecondary,
-            borderBottom: activeTab === 'physical' ? `3px solid ${theme.colors.primary}` : 'none'
-          }}
-        >
-          ৩. শারীরিক সাধারণ
-        </button>
+        {[
+          { key: 'chief', label: '১. প্রধান লক্ষণ' },
+          { key: 'mental', label: '২. মানসিক লক্ষণ' },
+          { key: 'physical', label: '৩. শারীরিক সাধারণ' },
+          { key: 'rubrics', label: '৪. রেপার্টরি রুব্রিক্স' }
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            style={{
+              flex: 1,
+              minWidth: '120px',
+              padding: '12px 10px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              fontFamily: theme.fonts.bold,
+              fontSize: '13px',
+              color: activeTab === tab.key ? theme.colors.primary : theme.colors.textSecondary,
+              borderBottom: activeTab === tab.key ? `3px solid ${theme.colors.primary}` : 'none'
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* ট্যাব কন্টেন্ট */}
@@ -248,20 +263,33 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
                 onChange={e => setCaseState({ ...caseState, chiefComplaints: e.target.value })}
                 rows={4}
                 style={{ ...inputStyle, resize: 'vertical' }}
-                placeholder="রোগীর মূল কষ্ট ও লক্ষণগুলো লিখুন (যেমন: তীব্র মাথাব্যথা, বিকেল ৪টায় বৃদ্ধি)..."
+                placeholder="রোগীর মূল কষ্ট ও লক্ষণগুলো লিখুন..."
               />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontFamily: theme.fonts.bold, color: theme.colors.textPrimary, fontSize: '14px' }}>
-                হ্রাস-বৃদ্ধি (Modalities - Aggravation / Amelioration)
+                হ্রাস-বৃদ্ধি (Modalities)
               </label>
               <textarea
                 value={caseState.modalities}
                 onChange={e => setCaseState({ ...caseState, modalities: e.target.value })}
                 rows={3}
                 style={{ ...inputStyle, resize: 'vertical' }}
-                placeholder="কিসে বাড়ে বা কিসে কমে? (যেমন: ঠান্ডা প্রয়োগে উপশম, নড়াচড়ায় বৃদ্ধি)..."
+                placeholder="কিসে বাড়ে বা কিসে কমে?..."
               />
+            </div>
+
+            {/* ছবি আপলোড সেকশন */}
+            <div style={{ marginTop: '10px', border: `1px dashed ${theme.colors.border}`, padding: '15px', borderRadius: '8px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontFamily: theme.fonts.bold, color: theme.colors.textPrimary, fontSize: '14px' }}>
+                📷 রোগীর ছবি / ক্ষত বা জিহ্বার ছবি যুক্ত করুন
+              </label>
+              <input type="file" accept="image/*" onChange={handleImageChange} />
+              {imagePreview && (
+                <div style={{ marginTop: '10px' }}>
+                  <img src={imagePreview} alt="Symptom" style={{ maxHeight: '150px', borderRadius: '6px' }} />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -276,7 +304,7 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
               onChange={e => setCaseState({ ...caseState, mentalSymptoms: e.target.value })}
               rows={6}
               style={{ ...inputStyle, resize: 'vertical' }}
-              placeholder="রোগীর রাগ, ভয়, দুশ্চিন্তা, সান্ত্বনায় বৃদ্ধি/উপশম বা অন্যান্য আচরণগত লক্ষণ..."
+              placeholder="রোগীর রাগ, ভয়, দুশ্চিন্তা..."
             />
           </div>
         )}
@@ -292,7 +320,7 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
                 onChange={e => setCaseState({ ...caseState, physicalGenerals: e.target.value })}
                 rows={2}
                 style={{ ...inputStyle, resize: 'vertical' }}
-                placeholder="কাতরতা (উষ্ণকাতর / শীতকাতর), গোসল, মল-মূত্র ইত্যাদি..."
+                placeholder="কাতরতা, গোসল, মল-মূত্র..."
               />
             </div>
             <div>
@@ -304,7 +332,7 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
                 value={caseState.foodDesires}
                 onChange={e => setCaseState({ ...caseState, foodDesires: e.target.value })}
                 style={inputStyle}
-                placeholder="মিষ্টি/নোনতা পছন্দ, পানির পিপাসা (অল্প অল্প ঘনঘন / বেশি পরিমাণে দীর্ঘ বিরতিতে)..."
+                placeholder="পছন্দ/অপছন্দ ও পানির পিপাসা..."
               />
             </div>
             <div>
@@ -316,8 +344,42 @@ export const CaseTaking: React.FC<CaseTakingProps> = ({
                 onChange={e => setCaseState({ ...caseState, sleepDream: e.target.value })}
                 rows={3}
                 style={{ ...inputStyle, resize: 'vertical' }}
-                placeholder="ঘুমের পজিশন, স্বপ্নের ধরণ এবং ঘামের গন্ধ বা স্থান..."
+                placeholder="ঘুমের ধরন, স্বপ্ন ও ঘাম..."
               />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'rubrics' && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '12px', fontFamily: theme.fonts.bold, color: theme.colors.textPrimary, fontSize: '14px' }}>
+              🔍 নির্দিষ্ট রুব্রিক নির্বাচন করুন
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '350px', overflowY: 'auto' }}>
+              {AVAILABLE_RUBRICS.map(rubric => (
+                <label
+                  key={rubric.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    border: `1px solid ${theme.colors.border}`,
+                    cursor: 'pointer',
+                    backgroundColor: selectedRubrics.includes(rubric.id) ? '#e3f2fd' : 'transparent'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedRubrics.includes(rubric.id)}
+                    onChange={() => toggleRubric(rubric.id)}
+                  />
+                  <span>
+                    <strong style={{ color: theme.colors.primary }}>[{rubric.category}]</strong> {rubric.name}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
         )}
