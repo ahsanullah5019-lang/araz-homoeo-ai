@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { theme } from '../utils/theme';
 import { DashboardCard } from '../components/DashboardCard';
 import { useAppStore } from '../store/useAppStore';
@@ -22,22 +22,77 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setLoading 
   } = useAppStore();
 
-  // ডাটাবেস থেকে রোগীদের তালিকা লোড করা (অফলাইন-ফার্স্ট)
+  const [filterCategory, setFilterCategory] = useState<'all' | 'today' | 'followup'>('all');
+
+  // ডাটাবেস থেকে রোগীদের তালিকা লোড করা
   useEffect(() => {
     const fetchPatients = async () => {
       setLoading(true);
-      const data = await PatientService.getAllPatients();
-      setPatients(data);
-      setLoading(false);
+      try {
+        const data = await PatientService.getAllPatients();
+        setPatients(data || []);
+      } catch (error) {
+        console.error("Error loading patients:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchPatients();
   }, [setPatients, setLoading]);
 
-  // সার্চ কুয়েরির ওপর ভিত্তি করে রোগী ফিল্টার করা
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    patient.phone.includes(searchQuery)
-  );
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const todayPatientsCount = patients.filter(
+    p => p.createdAt && String(p.createdAt).startsWith(todayStr)
+  ).length;
+
+  const followUpPatientsCount = patients.filter(p => (p as any).isFollowUp).length;
+
+  const filteredPatients = patients.filter(patient => {
+    const matchesSearch = 
+      (patient.name || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+      (patient.phone || '').includes(searchQuery);
+
+    if (!matchesSearch) return false;
+
+    if (filterCategory === 'today') {
+      return patient.createdAt && String(patient.createdAt).startsWith(todayStr);
+    }
+    if (filterCategory === 'followup') {
+      return (patient as any).isFollowUp === true;
+    }
+
+    return true;
+  });
+
+  // রোগী ডিলিট করার ফাংশন (সব টাইপ এরর ফিক্স করা হয়েছে)
+  const handleDeletePatient = async (e: React.MouseEvent, patientId?: string, patientName?: string) => {
+    e.stopPropagation();
+
+    if (!patientId) {
+      alert("রোগীর আইডি পাওয়া যায়নি!");
+      return;
+    }
+
+    if (window.confirm(`আপনি কি নিশ্চিত যে "${patientName || 'রোগী'}"-এর সমস্ত ডাটা মুছে ফেলতে চান?`)) {
+      try {
+        setLoading(true);
+        
+        // PatientService এ deletePatient থাকলে তা কল করবে, না থাকলে লোকাল স্টেট থেকে রিমুভ করবে
+        if (typeof (PatientService as any).deletePatient === 'function') {
+          await (PatientService as any).deletePatient(patientId);
+        }
+
+        const updatedPatients = patients.filter(p => p.id !== patientId);
+        setPatients(updatedPatients);
+      } catch (error) {
+        alert("রোগী মুছে ফেলতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   return (
     <div style={{ 
@@ -73,10 +128,51 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* ১. স্ট্যাটাস কাউন্টারসমূহ */}
       <div style={{ display: 'flex', flexWrap: 'wrap', margin: '0 -10px 20px -10px' }}>
-        <DashboardCard title="আজকের রোগী" count={filteredPatients.length} icon="👥" color={theme.colors.primary} />
-        <DashboardCard title="আজকের অ্যাপয়েন্টমেন্ট" count="০" icon="📅" color={theme.colors.accent} />
-        <DashboardCard title="ফলো-আপ রোগী" count="০" icon="🔄" color={theme.colors.secondary} />
-        <DashboardCard title="আজকের আয়" count="৳ ০.০০" icon="💰" subText="সারসংক্ষেপ" color="#8B5CF6" />
+        <div 
+          onClick={() => setFilterCategory(filterCategory === 'today' ? 'all' : 'today')}
+          style={{ flex: '1 1 200px', margin: '10px', cursor: 'pointer' }}
+        >
+          <DashboardCard 
+            title="আজকের রোগী" 
+            count={todayPatientsCount} 
+            icon="👥" 
+            color={filterCategory === 'today' ? '#1565C0' : theme.colors.primary} 
+          />
+        </div>
+
+        <div 
+          onClick={() => alert("অ্যাপয়েন্টমেন্ট সুবিধা শীঘ্রই যুক্ত হবে।")}
+          style={{ flex: '1 1 200px', margin: '10px', cursor: 'pointer' }}
+        >
+          <DashboardCard 
+            title="আজকের অ্যাপয়েন্টমেন্ট" 
+            count="০" 
+            icon="📅" 
+            color={theme.colors.accent} 
+          />
+        </div>
+
+        <div 
+          onClick={() => setFilterCategory(filterCategory === 'followup' ? 'all' : 'followup')}
+          style={{ flex: '1 1 200px', margin: '10px', cursor: 'pointer' }}
+        >
+          <DashboardCard 
+            title="ফলো-আপ রোগী" 
+            count={followUpPatientsCount} 
+            icon="🔄" 
+            color={filterCategory === 'followup' ? '#2E7D32' : theme.colors.secondary} 
+          />
+        </div>
+
+        <div style={{ flex: '1 1 200px', margin: '10px' }}>
+          <DashboardCard 
+            title="আজকের আয়" 
+            count="৳ ০.০০" 
+            icon="💰" 
+            subText="সারসংক্ষেপ" 
+            color="#8B5CF6" 
+          />
+        </div>
       </div>
 
       {/* ২. ইউনিভার্সাল সার্চ বার */}
@@ -94,16 +190,40 @@ export const Dashboard: React.FC<DashboardProps> = ({
             boxShadow: theme.shadows.card,
             fontSize: '16px',
             outline: 'none',
-            fontFamily: theme.fonts.regular
+            fontFamily: theme.fonts.regular,
+            boxSizing: 'border-box'
           }}
         />
       </div>
 
       {/* ৩. রোগীর তালিকা বা খালি অবস্থার নোটিশ */}
       <div style={{ backgroundColor: theme.colors.surface, borderRadius: '12px', padding: '20px', boxShadow: theme.shadows.card }}>
-        <h3 style={{ color: theme.colors.textPrimary, marginTop: 0, marginBottom: '15px', fontFamily: theme.fonts.bold }}>
-          রোগীর তালিকা ({filteredPatients.length})
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3 style={{ color: theme.colors.textPrimary, margin: 0, fontFamily: theme.fonts.bold }}>
+            রোগীর তালিকা ({filteredPatients.length})
+            {filterCategory !== 'all' && (
+              <span style={{ fontSize: '13px', color: theme.colors.primary, marginLeft: '8px' }}>
+                ({filterCategory === 'today' ? 'আজকের রোগী' : 'ফলো-আপ'})
+              </span>
+            )}
+          </h3>
+
+          {filterCategory !== 'all' && (
+            <button
+              onClick={() => setFilterCategory('all')}
+              style={{
+                backgroundColor: '#f0f0f0',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              সব দেখান ✕
+            </button>
+          )}
+        </div>
         
         {isLoading ? (
           <p style={{ color: theme.colors.textSecondary, textAlign: 'center' }}>ARAZ Homoeo AI লোড হচ্ছে...</p>
@@ -115,7 +235,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filteredPatients.map((patient) => (
               <div 
-                key={patient.id} 
+                key={patient.id || Math.random().toString()} 
                 onClick={() => onSelectPatient && onSelectPatient(patient)}
                 style={{
                   display: 'flex',
@@ -134,7 +254,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     বয়স: {patient.age} | লিঙ্গ: {patient.gender} | ফোন: {patient.phone}
                   </span>
                 </div>
-                <span style={{ color: theme.colors.primary, fontSize: '14px', fontWeight: 'bold' }}>বিস্তারিত ➔</span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ color: theme.colors.primary, fontSize: '14px', fontWeight: 'bold' }}>
+                    বিস্তারিত ➔
+                  </span>
+
+                  {/* মুছে ফেলার (Delete) বাটন */}
+                  <button
+                    onClick={(e) => handleDeletePatient(e, patient.id, patient.name)}
+                    title="রোগী মুছুন"
+                    style={{
+                      backgroundColor: '#FFEBEE',
+                      color: '#D32F2F',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🗑️ ডিলিট
+                  </button>
+                </div>
               </div>
             ))}
           </div>
